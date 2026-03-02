@@ -21,3 +21,7 @@ backend/src/config/drive-credentials.json
 
 # Logs adicionales
 *.log
+
+node_modules/
+dist/
+.env
