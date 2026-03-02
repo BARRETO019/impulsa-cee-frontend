@@ -1,0 +1,23 @@
+# ===============================
+# SEGURIDAD
+# ===============================
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+
+# Archivos de configuración sensibles
+/backend/.env
+/backend/src/config/*.json
+
+# Subidas de archivos
+uploads/
+backend/uploads/
+
+# Tokens OAuth
+backend/src/config/oauth-token.json
+backend/src/config/drive-credentials.json
+
+# Logs adicionales
+*.log
