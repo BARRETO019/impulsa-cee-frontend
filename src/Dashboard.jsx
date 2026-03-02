@@ -3,11 +3,20 @@ import VisitWizard from './VisitWizard';
 
 export default function Dashboard({ onLogout }) {
 
+  // Datos de visitas, clientes planeados y visita en curso
   const [visits, setVisits] = useState([]);
   const [clientesPlaneados, setClientesPlaneados] = useState([]);
   const [visitActiva, setVisitActiva] = useState(null);
 
-  // 🔥 Sacamos el role desde el token correctamente
+  // ==============================================
+  // 🔥 LEEMOS LA URL DEL BACKEND DESDE VITE
+  // ==============================================
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  // ==============================================
+  // SACAR EL ROLE DESDE EL TOKEN
+  // ==============================================
+
   const token = localStorage.getItem('token');
   let userRole = null;
 
@@ -16,15 +25,18 @@ export default function Dashboard({ onLogout }) {
     userRole = decoded.role;
   }
 
-  // ==============================
-  // CARGA INICIAL
-  // ==============================
+  // ==============================================
+  // CARGA INICIAL DE DATOS
+  // ==============================================
 
   useEffect(() => {
 
+    // Cargar visitas del usuario
     const fetchVisits = async () => {
       try {
-        const response = await fetch('https://impulsa-cee-backend.onrender.com/api/visits', {
+
+        // 👇 Usamos la variable de entorno, NO la URL fija
+        const response = await fetch(`${API_URL}/api/visits`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -36,10 +48,11 @@ export default function Dashboard({ onLogout }) {
       }
     };
 
+    // Cargar clientes planeados (AirTable)
     const fetchPlaneados = async () => {
       try {
         const response = await fetch(
-          'https://impulsa-cee-backend.onrender.com/api/visits/airtable/planeados'
+          `${API_URL}/api/visits/airtable/planeados`
         );
 
         const data = await response.json();
@@ -55,15 +68,14 @@ export default function Dashboard({ onLogout }) {
 
   }, []);
 
-  // ==============================
+  // ==============================================
   // INICIAR VISITA
-  // ==============================
+  // ==============================================
 
   const iniciarVisita = async (cliente) => {
 
     try {
-
-      const response = await fetch('https://impulsa-cee-backend.onrender.com/api/visits', {
+      const response = await fetch(`${API_URL}/api/visits`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -79,7 +91,7 @@ export default function Dashboard({ onLogout }) {
       const data = await response.json();
 
       if (response.ok) {
-        setVisitActiva(data);
+        setVisitActiva(data); // Abre el Wizard
       } else {
         alert(data.error || 'Error iniciando visita');
       }
@@ -89,14 +101,13 @@ export default function Dashboard({ onLogout }) {
     }
   };
 
-  // ==============================
+  // ==============================================
   // FINALIZAR VISITA
-  // ==============================
+  // ==============================================
 
   const finalizeVisit = async (id) => {
-
     const response = await fetch(
-      `https://impulsa-cee-backend.onrender.com/api/visits/${id}/finalize`,
+      `${API_URL}/api/visits/${id}/finalize`,
       {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
@@ -104,6 +115,7 @@ export default function Dashboard({ onLogout }) {
     );
 
     if (response.ok) {
+      // Actualizamos la visita pero sin recargar la página
       setVisits(prev =>
         prev.map(v =>
           v.id === id ? { ...v, estado: 'finalizada' } : v
@@ -114,9 +126,9 @@ export default function Dashboard({ onLogout }) {
     }
   };
 
-  // ==============================
+  // ==============================================
   // BORRAR VISITA (solo CEO)
-  // ==============================
+  // ==============================================
 
   const borrarVisita = async (id) => {
 
@@ -127,7 +139,7 @@ export default function Dashboard({ onLogout }) {
     if (!confirmacion) return;
 
     const response = await fetch(
-      `https://impulsa-cee-backend.onrender.com/api/visits/${id}`,
+      `${API_URL}/api/visits/${id}`,
       {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
@@ -141,9 +153,9 @@ export default function Dashboard({ onLogout }) {
     }
   };
 
-  // ==============================
-  // MOSTRAR WIZARD
-  // ==============================
+  // ==============================================
+  // SI HAY UNA VISITA EN CURSO, MOSTRAR EL WIZARD
+  // ==============================================
 
   if (visitActiva) {
     return (
@@ -154,13 +166,16 @@ export default function Dashboard({ onLogout }) {
     );
   }
 
-  // ==============================
-  // RENDER
-  // ==============================
+  // ==============================================
+  // RENDER PRINCIPAL DEL DASHBOARD
+  // ==============================================
 
   return (
     <div>
 
+      {/* ==========================
+          CLIENTES PLANEADOS
+      =========================== */}
       <div className="card">
         <h2>Clientes Planeados</h2>
 
@@ -169,10 +184,9 @@ export default function Dashboard({ onLogout }) {
         ) : (
           clientesPlaneados.map(cliente => (
             <div key={cliente.airtable_id} className="card">
-              <strong>{cliente.cliente}</strong>
-              <br />
-              {cliente.municipio}
-              <br />
+              <strong>{cliente.cliente}</strong><br />
+              {cliente.municipio}<br />
+
               <button
                 onClick={() => iniciarVisita(cliente)}
                 style={{ marginTop: 10 }}
@@ -184,6 +198,9 @@ export default function Dashboard({ onLogout }) {
         )}
       </div>
 
+      {/* ==========================
+          MIS VISITAS
+      =========================== */}
       <div className="card">
         <h2>Mis Visitas</h2>
 
@@ -193,8 +210,7 @@ export default function Dashboard({ onLogout }) {
           visits.map((visit) => (
             <div key={visit.id} className="card">
 
-              <strong>{visit.direccion}</strong>
-              <br />
+              <strong>{visit.direccion}</strong><br />
               {visit.municipio} — {visit.estado}
 
               {visit.estado !== 'finalizada' && (
@@ -206,6 +222,7 @@ export default function Dashboard({ onLogout }) {
                 </button>
               )}
 
+              {/* Solo los usuarios CEO pueden borrar */}
               {userRole === 'ceo' && (
                 <button
                   onClick={() => borrarVisita(visit.id)}

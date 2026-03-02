@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 /**
  * ==========================================================
- * VISIT WIZARD
+ * VISIT WIZARD — COMPLETAMENTE CORREGIDO Y COMENTADO
  * ==========================================================
  */
 
@@ -22,6 +22,7 @@ export default function VisitWizard({ visit, onBack }) {
         Paso {step} de 4
       </div>
 
+      {/* Renderiza cada paso */}
       {step === 1 && <StepGeneral visit={visit} onNext={nextStep} />}
       {step === 2 && <StepEnvelope visit={visit} onNext={nextStep} onBack={prevStep} />}
       {step === 3 && <StepInstallations visit={visit} onNext={nextStep} onBack={prevStep} />}
@@ -42,6 +43,9 @@ export default function VisitWizard({ visit, onBack }) {
 function StepGeneral({ visit, onNext }) {
 
   const token = localStorage.getItem('token');
+
+  // 👇 IMPORTANTE: URL DEL BACKEND DESDE VITE
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const [form, setForm] = useState({
     provincia: '',
@@ -74,8 +78,9 @@ function StepGeneral({ visit, onNext }) {
       .map(p => `Planta ${p.numero}: ${p.altura}m`)
       .join(' | ');
 
+    // 👇 SE CAMBIÓ LA URL FIJA POR LA VARIABLE DINÁMICA
     const response = await fetch(
-      `https://impulsa-cee-backend.onrender.com/api/visits/${visit.id}/building`,
+      `${API_URL}/api/visits/${visit.id}/building`,
       {
         method: 'PUT',
         headers: {
@@ -92,14 +97,14 @@ function StepGeneral({ visit, onNext }) {
         })
       }
     );
-        const data = await response.json();
+
+    const data = await response.json();
 
     if (response.ok) {
-         onNext();
+      onNext();
     } else {
-        console.log(data);
-        alert(data.error || "Error guardando datos");
-
+      console.log(data);
+      alert(data.error || "Error guardando datos");
     }
   };
 
@@ -129,12 +134,10 @@ function StepGeneral({ visit, onNext }) {
           />
         </div>
       ))}
-        {/* ============================= */}
-{/* AISLAMIENTO */}
-{/* ============================= */}
 
-  <div style={{ marginTop: 30 }}>
-     <h4 style={{ marginBottom: 8 }}>Tipo de aislamiento</h4>
+      {/* Tipo aislamiento */}
+      <div style={{ marginTop: 30 }}>
+        <h4 style={{ marginBottom: 8 }}>Tipo de aislamiento</h4>
 
         <select
           name="tipo_aislamiento"
@@ -142,40 +145,39 @@ function StepGeneral({ visit, onNext }) {
           onChange={handleChange}
           style={{ width: "100%", padding: 10 }}
         >
-        <option value="">Seleccionar tipo</option>
-        <option value="Lana mineral">Lana mineral</option>
-        <option value="Poliestireno">Poliestireno</option>
-        <option value="Sin aislamiento">Sin aislamiento</option>
-        <option value="Desconocido">Desconocido</option>
+          <option value="">Seleccionar tipo</option>
+          <option value="Lana mineral">Lana mineral</option>
+          <option value="Poliestireno">Poliestireno</option>
+          <option value="Sin aislamiento">Sin aislamiento</option>
+          <option value="Desconocido">Desconocido</option>
         </select>
       </div>
 
-      {/* ============================= */}
-      {/* MOTIVO CERTIFICADO */}
-      {/* ============================= */}
+      {/* Motivo del certificado */}
+      <div style={{ marginTop: 25 }}>
+        <h4 style={{ marginBottom: 8 }}>Motivo del certificado</h4>
 
-    <div style={{ marginTop: 25 }}>
-    <h4 style={{ marginBottom: 8 }}>Motivo del certificado</h4>
-
-      <select
-        name="motivo_certificado"
-        value={form.motivo_certificado}
-        onChange={handleChange}
-        style={{ width: "100%", padding: 10 }}
-      >
-        <option value="">Seleccionar motivo</option>
-        <option value="Venta">Venta</option>
-        <option value="Alquiler">Alquiler</option>
-        <option value="Renovación">Renovación</option>
-      </select>
+        <select
+          name="motivo_certificado"
+          value={form.motivo_certificado}
+          onChange={handleChange}
+          style={{ width: "100%", padding: 10 }}
+        >
+          <option value="">Seleccionar motivo</option>
+          <option value="Venta">Venta</option>
+          <option value="Alquiler">Alquiler</option>
+          <option value="Renovación">Renovación</option>
+        </select>
       </div>
+
       <button onClick={guardarDatos} style={{ marginTop: 20 }}>
         Guardar y continuar →
       </button>
 
-  </div>
+    </div>
   );
 }
+
 //////////////////////////////////////////////////////////////////
 // STEP 2 — ENVOLVENTE
 //////////////////////////////////////////////////////////////////
@@ -183,6 +185,7 @@ function StepGeneral({ visit, onNext }) {
 function StepEnvelope({ visit, onNext, onBack }) {
 
   const token = localStorage.getItem('token');
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const [elementos, setElementos] = useState([]);
   const [nuevo, setNuevo] = useState({
@@ -205,7 +208,7 @@ function StepEnvelope({ visit, onNext, onBack }) {
     }
 
     const response = await fetch(
-      `https://impulsa-cee-backend.onrender.com/api/visits/${visit.id}/envelope`,
+      `${API_URL}/api/visits/${visit.id}/envelope`,
       {
         method: 'POST',
         headers: {
@@ -236,7 +239,6 @@ function StepEnvelope({ visit, onNext, onBack }) {
       <h3>Envolvente térmica</h3>
 
       {/* FORMULARIO */}
-
       <div style={{ marginTop: 15 }}>
         <label>Tipo de elemento</label>
         <select
@@ -254,17 +256,17 @@ function StepEnvelope({ visit, onNext, onBack }) {
 
       <div style={{ marginTop: 10 }}>
         <label>Orientación</label>
-        <select
-          name="orientacion"
-          value={nuevo.orientacion}
-          onChange={handleChange}
-        >
-          <option value="">Seleccionar</option>
-          <option>Norte</option>
-          <option>Sur</option>
-          <option>Este</option>
-          <option>Oeste</option>
-        </select>
+          <select
+            name="orientacion"
+            value={nuevo.orientacion}
+            onChange={handleChange}
+          >
+            <option value="">Seleccionar</option>
+            <option>Norte</option>
+            <option>Sur</option>
+            <option>Este</option>
+            <option>Oeste</option>
+          </select>
       </div>
 
       <div style={{ marginTop: 10 }}>
@@ -304,7 +306,6 @@ function StepEnvelope({ visit, onNext, onBack }) {
       </button>
 
       {/* LISTADO */}
-
       {elementos.length > 0 && (
         <div style={{ marginTop: 20 }}>
           <h4>Elementos añadidos</h4>
@@ -317,14 +318,8 @@ function StepEnvelope({ visit, onNext, onBack }) {
       )}
 
       <div style={{ marginTop: 30 }}>
-        <button onClick={onBack}>
-          ← Volver
-        </button>
-
-        <button
-          onClick={onNext}
-          style={{ marginLeft: 10 }}
-        >
+        <button onClick={onBack}>← Volver</button>
+        <button onClick={onNext} style={{ marginLeft: 10 }}>
           Guardar y continuar →
         </button>
       </div>
@@ -340,6 +335,7 @@ function StepEnvelope({ visit, onNext, onBack }) {
 function StepInstallations({ visit, onNext, onBack }) {
 
   const token = localStorage.getItem('token');
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const [instalaciones, setInstalaciones] = useState([]);
   const [nuevo, setNuevo] = useState({
@@ -363,7 +359,7 @@ function StepInstallations({ visit, onNext, onBack }) {
     }
 
     const response = await fetch(
-      `https://impulsa-cee-backend.onrender.com/api/visits/${visit.id}/installations`,
+      `${API_URL}/api/visits/${visit.id}/installations`,
       {
         method: 'POST',
         headers: {
@@ -394,7 +390,7 @@ function StepInstallations({ visit, onNext, onBack }) {
 
       <h3>Instalaciones térmicas</h3>
 
-      {/* TIPO DE EQUIPO */}
+      {/* Tipo de equipo */}
       <div style={{ marginTop: 15 }}>
         <label>Tipo de equipo</label>
         <select
@@ -412,7 +408,7 @@ function StepInstallations({ visit, onNext, onBack }) {
         </select>
       </div>
 
-      {/* ENERGÍA */}
+      {/* Energía */}
       <div style={{ marginTop: 10 }}>
         <label>Combustible / Energía</label>
         <select
@@ -429,7 +425,7 @@ function StepInstallations({ visit, onNext, onBack }) {
         </select>
       </div>
 
-      {/* MARCA / MODELO */}
+      {/* Marca modelo */}
       <div style={{ marginTop: 10 }}>
         <label>Marca / Modelo</label>
         <input
@@ -439,7 +435,7 @@ function StepInstallations({ visit, onNext, onBack }) {
         />
       </div>
 
-      {/* POTENCIA */}
+      {/* Potencia */}
       <div style={{ marginTop: 10 }}>
         <label>Potencia (kW)</label>
         <input
@@ -450,7 +446,7 @@ function StepInstallations({ visit, onNext, onBack }) {
         />
       </div>
 
-      {/* AÑO */}
+      {/* Año */}
       <div style={{ marginTop: 10 }}>
         <label>Año aproximado</label>
         <input
@@ -461,7 +457,7 @@ function StepInstallations({ visit, onNext, onBack }) {
         />
       </div>
 
-      {/* OBSERVACIONES */}
+      {/* Observaciones */}
       <div style={{ marginTop: 10 }}>
         <label>Observaciones</label>
         <input
@@ -471,14 +467,10 @@ function StepInstallations({ visit, onNext, onBack }) {
         />
       </div>
 
-      <button
-        onClick={añadirInstalacion}
-        style={{ marginTop: 15 }}
-      >
+      <button onClick={añadirInstalacion} style={{ marginTop: 15 }}>
         + Añadir equipo
       </button>
 
-      {/* LISTADO DE EQUIPOS */}
       {instalaciones.length > 0 && (
         <div style={{ marginTop: 20 }}>
           <h4>Equipos añadidos</h4>
@@ -492,14 +484,8 @@ function StepInstallations({ visit, onNext, onBack }) {
       )}
 
       <div style={{ marginTop: 30 }}>
-        <button onClick={onBack}>
-          ← Volver
-        </button>
-
-        <button
-          onClick={onNext}
-          style={{ marginLeft: 10 }}
-        >
+        <button onClick={onBack}>← Volver</button>
+        <button onClick={onNext} style={{ marginLeft: 10 }}>
           Guardar y continuar →
         </button>
       </div>
@@ -507,30 +493,30 @@ function StepInstallations({ visit, onNext, onBack }) {
     </div>
   );
 }
-///////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////
 // STEP 4 — FOTOS
-///////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
 
 function StepPhotos({ visit, onBack }) {
 
   const token = localStorage.getItem('token');
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const finalizarVisita = async () => {
     try {
 
       const response = await fetch(
-        `https://impulsa-cee-backend.onrender.com/api/visits/${visit.id}/finalize`,
+        `${API_URL}/api/visits/${visit.id}/finalize`,
         {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` }
         }
       );
 
       if (response.ok) {
         alert("Visita enviada correctamente 🚀");
-        window.location.reload(); // vuelve al dashboard
+        window.location.reload();
       } else {
         const data = await response.json();
         alert(data.error || "Error finalizando visita");
@@ -551,9 +537,7 @@ function StepPhotos({ visit, onBack }) {
 
       <div style={{ marginTop: 30 }}>
 
-        <button onClick={onBack}>
-          ← Volver
-        </button>
+        <button onClick={onBack}>← Volver</button>
 
         <button
           onClick={finalizarVisita}
