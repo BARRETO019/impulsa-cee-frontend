@@ -578,22 +578,17 @@ function StepPhotos({ visit, onBack }) {
   const [photos, setPhotos] = useState([]);
   const [preview, setPreview] = useState([]);
 
-  // Cuando seleccionas archivos
   const handlePhotoChange = (e) => {
     const files = Array.from(e.target.files);
     setPhotos(files);
-
-    // Generar previsualización
-    const previews = files.map((file) => URL.createObjectURL(file));
-    setPreview(previews);
+    setPreview(files.map((file) => URL.createObjectURL(file)));
   };
 
-  // Subir fotos antes de finalizar
   const uploadPhotos = async () => {
     if (photos.length === 0) return true;
 
     const formData = new FormData();
-    photos.forEach((file) => formData.append("photo", file));
+    photos.forEach((file) => formData.append("photo", file)); // 👈 IMPORTANTE
 
     const response = await fetch(
       `${API_URL}/api/visits/${visit.id}/photos`,
@@ -635,21 +630,19 @@ function StepPhotos({ visit, onBack }) {
     <div>
       <h3>Fotos</h3>
 
-      {/* INPUT MULTIPLE */}
       <input type="file" multiple onChange={handlePhotoChange} />
 
-      {/* PREVISUALIZACIÓN */}
       {preview.length > 0 && (
-        <div style={{ marginTop: "20px", display: "flex", flexWrap: "wrap", gap: "10px" }}>
+        <div style={{ marginTop: 20, display: "flex", flexWrap: "wrap", gap: 10 }}>
           {preview.map((url, i) => (
             <img
               key={i}
               src={url}
               style={{
-                width: "120px",
-                height: "120px",
+                width: 120,
+                height: 120,
                 objectFit: "cover",
-                borderRadius: "8px",
+                borderRadius: 8,
                 border: "2px solid #ddd",
               }}
             />
