@@ -572,85 +572,90 @@ function StepInstallations({ visit, onNext, onBack }) {
 //////////////////////////////////////////////////////////////////
 
 function StepPhotos({ visit, onBack }) {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   const API_URL = import.meta.env.VITE_API_URL;
 
   const [photos, setPhotos] = useState([]);
+  const [preview, setPreview] = useState([]);
 
+  // Cuando seleccionas archivos
   const handlePhotoChange = (e) => {
-    setPhotos(e.target.files);
+    const files = Array.from(e.target.files);
+    setPhotos(files);
+
+    // Generar previsualización
+    const previews = files.map((file) => URL.createObjectURL(file));
+    setPreview(previews);
   };
 
+  // Subir fotos antes de finalizar
   const uploadPhotos = async () => {
-    if (photos.length === 0) return; // Si no seleccionó fotos, no subimos nada
+    if (photos.length === 0) return true;
 
     const formData = new FormData();
+    photos.forEach((file) => formData.append("photo", file));
 
-    // Añadir todas las fotos al formData
-    for (let i = 0; i < photos.length; i++) {
-      formData.append("photo", photos[i]);
-    }
-
-    // Hacemos UNA SOLA petición al backend
     const response = await fetch(
       `${API_URL}/api/visits/${visit.id}/photos`,
       {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        body: formData
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       }
     );
 
-    if (!response.ok) {
-      const data = await response.json();
-      alert(data.error || "Error subiendo fotos");
-      return false;
-    }
-
-    return true;
+    return response.ok;
   };
 
   const finalizarVisita = async () => {
-    try {
-      // 1️⃣ Subir fotos antes de finalizar
-      const okFotos = await uploadPhotos();
-      if (okFotos === false) return;
+    const ok = await uploadPhotos();
+    if (!ok) {
+      alert("Error subiendo fotos");
+      return;
+    }
 
-      // 2️⃣ FINALIZAR VISITA
-      const response = await fetch(
-        `${API_URL}/api/visits/${visit.id}/finalize`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      if (response.ok) {
-        alert("Visita enviada correctamente 🚀");
-        window.location.reload();
-      } else {
-        const data = await response.json();
-        alert(data.error || "Error finalizando visita");
+    const response = await fetch(
+      `${API_URL}/api/visits/${visit.id}/finalize`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
       }
+    );
 
-    } catch (error) {
-      console.error(error);
-      alert("Error conectando con servidor");
+    if (response.ok) {
+      alert("Visita enviada correctamente 🚀");
+      window.location.reload();
+    } else {
+      const data = await response.json();
+      alert(data.error || "Error finalizando visita");
     }
   };
 
   return (
     <div>
-  <h3>Fotos</h3>
-  <h1>PRUEBA.</h1>
-
-  <input type="file" multiple />
       <h3>Fotos</h3>
 
-      {/* Selección de fotos */}
+      {/* INPUT MULTIPLE */}
       <input type="file" multiple onChange={handlePhotoChange} />
+
+      {/* PREVISUALIZACIÓN */}
+      {preview.length > 0 && (
+        <div style={{ marginTop: "20px", display: "flex", flexWrap: "wrap", gap: "10px" }}>
+          {preview.map((url, i) => (
+            <img
+              key={i}
+              src={url}
+              style={{
+                width: "120px",
+                height: "120px",
+                objectFit: "cover",
+                borderRadius: "8px",
+                border: "2px solid #ddd",
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       <div style={{ marginTop: 30 }}>
         <button onClick={onBack}>← Volver</button>
