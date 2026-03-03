@@ -196,14 +196,12 @@ button:hover {
     padding: 6px 10px;
   }
 }
-/* ===============================
-   FIX: permitir selección múltiple en input file
-================================= */
+/* FIX MULTIPLE FILE INPUT */
 input[type="file"] {
   appearance: auto !important;
   -webkit-appearance: auto !important;
-  padding: initial !important;
-  border: initial !important;
-  background: initial !important;
+  padding: 8px !important;
+  background-color: white !important;
+  border: none !important;
   width: auto !important;
 }
