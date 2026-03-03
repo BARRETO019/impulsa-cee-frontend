@@ -643,6 +643,10 @@ function StepPhotos({ visit, onBack }) {
 
   return (
     <div>
+  <h3>Fotos</h3>
+  <h1>PRUEBA.</h1>
+
+  <input type="file" multiple />
       <h3>Fotos</h3>
 
       {/* Selección de fotos */}
