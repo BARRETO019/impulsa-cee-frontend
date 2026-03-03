@@ -41,51 +41,65 @@ export default function VisitWizard({ visit, onBack }) {
 //////////////////////////////////////////////////////////////////
 
 function StepGeneral({ visit, onNext }) {
-
-  const token = localStorage.getItem('token');
-
-  // 👇 IMPORTANTE: URL DEL BACKEND DESDE VITE
+  const token = localStorage.getItem("token");
   const API_URL = import.meta.env.VITE_API_URL;
 
   const [form, setForm] = useState({
-    provincia: '',
+    provincia: "",
     dormitorios: 1,
-    tipo_aislamiento: '',
-    motivo_certificado: '',
-    plantas: [{ numero: 1, altura: '' }]
+    tipo_aislamiento: "",
+    motivo_certificado: "",
+    plantas: [
+      { numero: 1, altura: "" }
+    ]
   });
+
+  const [nuevaAltura, setNuevaAltura] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const addPlanta = () => {
-    setForm({
-      ...form,
-      plantas: [...form.plantas, { numero: form.plantas.length + 1, altura: '' }]
-    });
+  // Añadir planta desde UI
+  const addPlantaDesdeUI = () => {
+    if (!nuevaAltura) {
+      alert("Introduce la altura");
+      return;
+    }
+
+    setForm(prev => ({
+      ...prev,
+      plantas: [
+        ...prev.plantas,
+        {
+          numero: prev.plantas.length + 1,
+          altura: nuevaAltura
+        }
+      ]
+    }));
+
+    setNuevaAltura("");
   };
 
-  const handleAlturaChange = (index, value) => {
-    const nuevas = [...form.plantas];
-    nuevas[index].altura = value;
+  // Borrar planta
+  const removePlanta = (index) => {
+    const nuevas = form.plantas.filter((_, i) => i !== index);
+    nuevas.forEach((p, i) => p.numero = i + 1);
     setForm({ ...form, plantas: nuevas });
   };
 
   const guardarDatos = async () => {
-
     const alturasTexto = form.plantas
-      .map(p => `Planta ${p.numero}: ${p.altura}m`)
-      .join(' | ');
+      .map((p) => `Planta ${p.numero}: ${p.altura}m`)
+      .join(" | ");
 
-    // 👇 SE CAMBIÓ LA URL FIJA POR LA VARIABLE DINÁMICA
     const response = await fetch(
       `${API_URL}/api/visits/${visit.id}/building`,
       {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           provincia: form.provincia,
@@ -94,7 +108,7 @@ function StepGeneral({ visit, onNext }) {
           alturas_plantas: alturasTexto,
           tipo_aislamiento: form.tipo_aislamiento,
           motivo_certificado: form.motivo_certificado
-        })
+        }),
       }
     );
 
@@ -110,7 +124,7 @@ function StepGeneral({ visit, onNext }) {
 
   return (
     <div>
-      <h3>Datos generales</h3>
+      <h3>Datos generales (Prueba)</h3>
 
       <input value={visit.direccion} disabled />
       <input value={visit.municipio} disabled />
@@ -121,29 +135,91 @@ function StepGeneral({ visit, onNext }) {
         onChange={handleChange}
       />
 
-      <h4>Plantas</h4>
+      {/* ============================
+          PLANTAS (nuevo diseño)
+      ============================ */}
+      <h4 style={{ marginTop: 25 }}>Plantas</h4>
 
-      {form.plantas.map((planta, i) => (
-        <div key={i}>
-          Planta {planta.numero}
-          <input
-            type="number"
-            placeholder="Altura (m)"
-            value={planta.altura}
-            onChange={(e) => handleAlturaChange(i, e.target.value)}
-          />
+      {/* Formulario añadir nueva planta */}
+      <div style={{
+        marginTop: 15,
+        padding: 15,
+        border: "1px solid #ccc",
+        borderRadius: 8,
+        background: "#f8f9fa"
+      }}>
+        <label style={{ fontWeight: 600 }}>Altura de la planta (m)</label>
+        <input
+          type="number"
+          placeholder="Ej: 2.5"
+          value={nuevaAltura}
+          onChange={(e) => setNuevaAltura(e.target.value)}
+          style={{ width: "100%", marginTop: 5 }}
+        />
+
+        <button
+          onClick={addPlantaDesdeUI}
+          style={{
+            marginTop: 15,
+            width: "100%",
+            background: "#0f5132",
+            color: "white",
+            padding: "10px 0",
+            borderRadius: 6,
+            fontSize: 16
+          }}
+        >
+          + Añadir planta
+        </button>
+      </div>
+
+      {/* Listado de plantas añadidas */}
+      {form.plantas.length > 0 && (
+        <div style={{ marginTop: 20 }}>
+          <h4>Plantas añadidas</h4>
+
+          {form.plantas.map((p, i) => (
+            <div
+              key={i}
+              style={{
+                padding: 10,
+                border: "1px solid #ccc",
+                borderRadius: 6,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 8,
+                background: "white"
+              }}
+            >
+              <div>
+                <strong>Planta {p.numero}</strong> — {p.altura} m
+              </div>
+
+              <button
+                type="button"
+                onClick={() => removePlanta(i)}
+                style={{
+                  background: "#842029",
+                  color: "white",
+                  padding: "4px 10px",
+                  borderRadius: 4
+                }}
+              >
+                X
+              </button>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
 
       {/* Tipo aislamiento */}
       <div style={{ marginTop: 30 }}>
         <h4 style={{ marginBottom: 8 }}>Tipo de aislamiento</h4>
-
         <select
           name="tipo_aislamiento"
           value={form.tipo_aislamiento}
           onChange={handleChange}
-          style={{ width: "100%", padding: 10 }}
         >
           <option value="">Seleccionar tipo</option>
           <option value="Lana mineral">Lana mineral</option>
@@ -156,12 +232,10 @@ function StepGeneral({ visit, onNext }) {
       {/* Motivo del certificado */}
       <div style={{ marginTop: 25 }}>
         <h4 style={{ marginBottom: 8 }}>Motivo del certificado</h4>
-
         <select
           name="motivo_certificado"
           value={form.motivo_certificado}
           onChange={handleChange}
-          style={{ width: "100%", padding: 10 }}
         >
           <option value="">Seleccionar motivo</option>
           <option value="Venta">Venta</option>
@@ -173,7 +247,6 @@ function StepGeneral({ visit, onNext }) {
       <button onClick={guardarDatos} style={{ marginTop: 20 }}>
         Guardar y continuar →
       </button>
-
     </div>
   );
 }
