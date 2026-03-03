@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Login from './Login';
 import Dashboard from './Dashboard';
 import logo from './assets/logo.png';
-import 'src/styles-v2.css';
+import 'src/styles.css';
 
 function App() {
 
