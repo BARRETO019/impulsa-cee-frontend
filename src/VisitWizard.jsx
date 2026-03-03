@@ -572,13 +572,53 @@ function StepInstallations({ visit, onNext, onBack }) {
 //////////////////////////////////////////////////////////////////
 
 function StepPhotos({ visit, onBack }) {
-
   const token = localStorage.getItem('token');
   const API_URL = import.meta.env.VITE_API_URL;
 
+  const [photos, setPhotos] = useState([]);
+
+  const handlePhotoChange = (e) => {
+    setPhotos(e.target.files);
+  };
+
+  const uploadPhotos = async () => {
+    if (photos.length === 0) return; // Si no seleccionó fotos, no subimos nada
+
+    const formData = new FormData();
+
+    // Añadir todas las fotos al formData
+    for (let i = 0; i < photos.length; i++) {
+      formData.append("photo", photos[i]);
+    }
+
+    // Hacemos UNA SOLA petición al backend
+    const response = await fetch(
+      `${API_URL}/api/visits/${visit.id}/photos`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      }
+    );
+
+    if (!response.ok) {
+      const data = await response.json();
+      alert(data.error || "Error subiendo fotos");
+      return false;
+    }
+
+    return true;
+  };
+
   const finalizarVisita = async () => {
     try {
+      // 1️⃣ Subir fotos antes de finalizar
+      const okFotos = await uploadPhotos();
+      if (okFotos === false) return;
 
+      // 2️⃣ FINALIZAR VISITA
       const response = await fetch(
         `${API_URL}/api/visits/${visit.id}/finalize`,
         {
@@ -603,13 +643,12 @@ function StepPhotos({ visit, onBack }) {
 
   return (
     <div>
-
       <h3>Fotos</h3>
 
-      <input type="file" multiple />
+      {/* Selección de fotos */}
+      <input type="file" multiple onChange={handlePhotoChange} />
 
       <div style={{ marginTop: 30 }}>
-
         <button onClick={onBack}>← Volver</button>
 
         <button
@@ -618,9 +657,7 @@ function StepPhotos({ visit, onBack }) {
         >
           Finalizar visita
         </button>
-
       </div>
-
     </div>
   );
 }
