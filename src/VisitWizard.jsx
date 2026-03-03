@@ -1,11 +1,11 @@
 import { useState } from 'react';
+import StepPhotos from "./StepPhotos";
 
 /**
  * ==========================================================
  * VISIT WIZARD — COMPLETAMENTE CORREGIDO Y COMENTADO
  * ==========================================================
  */
-
 export default function VisitWizard({ visit, onBack }) {
 
   const [step, setStep] = useState(1);
@@ -22,11 +22,21 @@ export default function VisitWizard({ visit, onBack }) {
         Paso {step} de 4
       </div>
 
-      {/* Renderiza cada paso */}
-      {step === 1 && <StepGeneral visit={visit} onNext={nextStep} />}
-      {step === 2 && <StepEnvelope visit={visit} onNext={nextStep} onBack={prevStep} />}
-      {step === 3 && <StepInstallations visit={visit} onNext={nextStep} onBack={prevStep} />}
-      {step === 4 && <StepPhotos visit={visit} onBack={prevStep} />}
+      {step === 1 && (
+        <StepGeneral visit={visit} onNext={nextStep} />
+      )}
+
+      {step === 2 && (
+        <StepEnvelope visit={visit} onNext={nextStep} onBack={prevStep} />
+      )}
+
+      {step === 3 && (
+        <StepInstallations visit={visit} onNext={nextStep} onBack={prevStep} />
+      )}
+
+      {step === 4 && (
+        <StepPhotos visit={visit} onBack={prevStep} />
+      )}
 
       <button onClick={onBack} style={{ marginTop: 30 }}>
         Volver al Dashboard
@@ -35,7 +45,6 @@ export default function VisitWizard({ visit, onBack }) {
     </div>
   );
 }
-
 //////////////////////////////////////////////////////////////////
 // STEP 1 — DATOS GENERALES
 //////////////////////////////////////////////////////////////////
@@ -563,103 +572,6 @@ function StepInstallations({ visit, onNext, onBack }) {
         </button>
       </div>
 
-    </div>
-  );
-}
-
-//////////////////////////////////////////////////////////////////
-// STEP 4 — FOTOS
-//////////////////////////////////////////////////////////////////
-
-function StepPhotos({ visit, onBack }) {
-  const token = localStorage.getItem("token");
-  const API_URL = import.meta.env.VITE_API_URL;
-
-  const [photos, setPhotos] = useState([]);
-  const [preview, setPreview] = useState([]);
-
-  const handlePhotoChange = (e) => {
-    const files = Array.from(e.target.files);
-    setPhotos(files);
-    setPreview(files.map((file) => URL.createObjectURL(file)));
-  };
-
-  const uploadPhotos = async () => {
-    if (photos.length === 0) return true;
-
-    const formData = new FormData();
-    photos.forEach((file) => formData.append("photo", file)); // 👈 IMPORTANTE
-
-    const response = await fetch(
-      `${API_URL}/api/visits/${visit.id}/photos`,
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      }
-    );
-
-    return response.ok;
-  };
-
-  const finalizarVisita = async () => {
-    const ok = await uploadPhotos();
-    if (!ok) {
-      alert("Error subiendo fotos");
-      return;
-    }
-
-    const response = await fetch(
-      `${API_URL}/api/visits/${visit.id}/finalize`,
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-
-    if (response.ok) {
-      alert("Visita enviada correctamente 🚀");
-      window.location.reload();
-    } else {
-      const data = await response.json();
-      alert(data.error || "Error finalizando visita");
-    }
-  };
-
-  return (
-    <div>
-      <h3>Fotos</h3>
-
-      <input type="file" multiple onChange={handlePhotoChange} />
-
-      {preview.length > 0 && (
-        <div style={{ marginTop: 20, display: "flex", flexWrap: "wrap", gap: 10 }}>
-          {preview.map((url, i) => (
-            <img
-              key={i}
-              src={url}
-              style={{
-                width: 120,
-                height: 120,
-                objectFit: "cover",
-                borderRadius: 8,
-                border: "2px solid #ddd",
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      <div style={{ marginTop: 30 }}>
-        <button onClick={onBack}>← Volver</button>
-
-        <button
-          onClick={finalizarVisita}
-          style={{ marginLeft: 10, background: "#0f5132", color: "white" }}
-        >
-          Finalizar visita
-        </button>
-      </div>
     </div>
   );
 }
