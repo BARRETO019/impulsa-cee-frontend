@@ -13,37 +13,41 @@ export default function VisitWizard({ visit, onBack }) {
   const nextStep = () => setStep(prev => prev + 1);
   const prevStep = () => setStep(prev => prev - 1);
 
-  return (
-    <div className="card">
+ return (
+  <div className="card">
 
-      <h2>Visita técnica — {visit.direccion}</h2>
+    <h2>Visita técnica — {visit.direccion}</h2>
 
-      <div style={{ marginBottom: 20 }}>
-        Paso {step} de 4
-      </div>
-
-      {step === 1 && (
-        <StepGeneral visit={visit} onNext={nextStep} />
-      )}
-
-      {step === 2 && (
-        <StepEnvelope visit={visit} onNext={nextStep} onBack={prevStep} />
-      )}
-
-      {step === 3 && (
-        <StepInstallations visit={visit} onNext={nextStep} onBack={prevStep} />
-      )}
-
-      {step === 4 && (
-        <StepPhotos visit={visit} onBack={prevStep} />
-      )}
-
-      <button onClick={onBack} style={{ marginTop: 30 }}>
-        Volver al Dashboard
-      </button>
-
+    <div style={{ marginBottom: 20 }}>
+      Paso {step} de 5
     </div>
-  );
+
+    {step === 1 && (
+      <StepGeneral visit={visit} onNext={nextStep} />
+    )}
+
+    {step === 2 && (
+      <StepEnvelope visit={visit} onNext={nextStep} onBack={prevStep} />
+    )}
+
+    {step === 3 && (
+      <StepWindows visit={visit} onNext={nextStep} onBack={prevStep} />
+    )}
+
+    {step === 4 && (
+      <StepInstallations visit={visit} onNext={nextStep} onBack={prevStep} />
+    )}
+
+    {step === 5 && (
+      <StepPhotos visit={visit} onBack={prevStep} />
+    )}
+
+    <button onClick={onBack} style={{ marginTop: 30 }}>
+      Volver al Dashboard
+    </button>
+
+  </div>
+);
 }
 //////////////////////////////////////////////////////////////////
 // STEP 1 — DATOS GENERALES
@@ -415,9 +419,154 @@ function StepEnvelope({ visit, onNext, onBack }) {
     </div>
   );
 }
-
 //////////////////////////////////////////////////////////////////
-// STEP 3 — INSTALACIONES TÉRMICAS
+// STEP 3 — VENTANAS
+//////////////////////////////////////////////////////////////////
+
+function StepWindows({ visit, onNext, onBack }) {
+
+  const token = localStorage.getItem('token');
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const [windows, setWindows] = useState([]);
+  const [nuevo, setNuevo] = useState({
+    tipo: '',
+    marco: '',
+    vidrio: '',
+    ancho: '',
+    alto: ''
+  });
+
+  const handleChange = (e) => {
+    setNuevo({ ...nuevo, [e.target.name]: e.target.value });
+  };
+
+  const añadirVentana = async () => {
+
+    if (!nuevo.tipo || !nuevo.ancho || !nuevo.alto) {
+      alert("Completa tipo, ancho y alto");
+      return;
+    }
+
+    const superficie = Number(nuevo.ancho) * Number(nuevo.alto);
+
+    const response = await fetch(
+      `${API_URL}/api/visits/${visit.id}/windows`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          nombre: nuevo.tipo,
+          marco: nuevo.marco,
+          vidrio: nuevo.vidrio,
+          superficie: superficie
+        })
+      }
+    );
+
+    if (response.ok) {
+
+      setWindows([...windows, nuevo]);
+
+      setNuevo({
+        tipo: '',
+        marco: '',
+        vidrio: '',
+        ancho: '',
+        alto: ''
+      });
+
+    } else {
+      alert("Error guardando ventana");
+    }
+  };
+
+  return (
+    <div>
+
+      <h3>Huecos (Ventanas)</h3>
+
+      <div style={{ marginTop: 15 }}>
+        <label>Tipo</label>
+        <select name="tipo" value={nuevo.tipo} onChange={handleChange}>
+          <option value="">Seleccionar</option>
+          <option>Ventana</option>
+          <option>Puerta acristalada</option>
+          <option>Ventanal</option>
+        </select>
+      </div>
+
+      <div style={{ marginTop: 10 }}>
+        <label>Marco</label>
+        <select name="marco" value={nuevo.marco} onChange={handleChange}>
+          <option value="">Seleccionar</option>
+          <option>Aluminio</option>
+          <option>PVC</option>
+          <option>Madera</option>
+          <option>Aluminio RPT</option>
+        </select>
+      </div>
+
+      <div style={{ marginTop: 10 }}>
+        <label>Tipo de vidrio</label>
+        <select name="vidrio" value={nuevo.vidrio} onChange={handleChange}>
+          <option value="">Seleccionar</option>
+          <option>Simple</option>
+          <option>Doble</option>
+          <option>Triple</option>
+        </select>
+      </div>
+
+      <div style={{ marginTop: 10 }}>
+        <label>Ancho (m)</label>
+        <input
+          type="number"
+          name="ancho"
+          value={nuevo.ancho}
+          onChange={handleChange}
+        />
+      </div>
+
+      <div style={{ marginTop: 10 }}>
+        <label>Alto (m)</label>
+        <input
+          type="number"
+          name="alto"
+          value={nuevo.alto}
+          onChange={handleChange}
+        />
+      </div>
+
+      <button onClick={añadirVentana} style={{ marginTop: 15 }}>
+        + Añadir ventana
+      </button>
+
+      {windows.length > 0 && (
+        <div style={{ marginTop: 20 }}>
+          <h4>Ventanas añadidas</h4>
+          {windows.map((w, i) => (
+            <div key={i}>
+              {w.tipo} — {w.marco} — {w.vidrio} — {w.ancho}m x {w.alto}m
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ marginTop: 30 }}>
+        <button onClick={onBack}>← Volver</button>
+        <button onClick={onNext} style={{ marginLeft: 10 }}>
+          Guardar y continuar →
+        </button>
+      </div>
+
+    </div>
+  );
+}
+//////////////////////////////////////////////////////////////////
+// STEP 4 — INSTALACIONES TÉRMICAS
 //////////////////////////////////////////////////////////////////
 
 function StepInstallations({ visit, onNext, onBack }) {
