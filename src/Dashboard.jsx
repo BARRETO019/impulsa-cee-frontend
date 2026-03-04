@@ -223,17 +223,17 @@ export default function Dashboard({ onLogout }) {
               )}
 
               {/* Solo los usuarios CEO pueden borrar */}
-              {userRole === 'ceo' && (
+              {(userRole === 'ceo' || userRole === 'admin') && (
                 <button
-                  onClick={() => borrarVisita(visit.id)}
-                  style={{
-                    marginLeft: 10,
-                    background: "#8b0000",
-                    color: "white"
-                  }}
-                >
-                  Borrar
-                </button>
+                onClick={() => borrarVisita(visit.id)}
+                style={{
+                marginLeft: 10,
+                background: "#8b0000",
+                color: "white"
+              }}
+              >
+               Borrar
+              </button>
               )}
 
             </div>
