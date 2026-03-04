@@ -297,7 +297,13 @@ function StepEnvelope({ visit, onNext, onBack }) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(nuevo)
+        body: JSON.stringify({
+        tipo: nuevo.tipo,
+        orientacion: nuevo.orientacion,
+        superficie: Number(nuevo.largo) * Number(nuevo.alto),
+        nombre: nuevo.tipo,
+        observaciones: nuevo.observaciones
+      })
       }
     );
 
