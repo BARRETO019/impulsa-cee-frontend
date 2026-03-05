@@ -16,29 +16,38 @@ function StepPhotos({ visit, onBack }) {
     setInputs(newInputs);
   };
 
+  // MODIFICADO: Ahora envía todas las fotos juntas
   const uploadPhotos = async () => {
+    const fd = new FormData();
+    let count = 0;
+
     for (const item of inputs) {
-      if (!item.file) continue;
+      if (item.file) {
+        fd.append("photo", item.file); // El nombre 'photo' coincide con el backend
+        count++;
+      }
+    }
 
-      const fd = new FormData();
-      fd.append("photo", item.file);
+    if (count === 0) return true; // Si no hay fotos, permitimos finalizar
 
+    try {
       const r = await fetch(`${API_URL}/api/visits/${visit.id}/photos`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: fd,
       });
 
-      if (!r.ok) return false;
+      return r.ok;
+    } catch (error) {
+      console.error("Error en la subida:", error);
+      return false;
     }
-
-    return true;
   };
 
   const finalizarVisita = async () => {
     const ok = await uploadPhotos();
     if (!ok) {
-      alert("Error subiendo fotos");
+      alert("Error subiendo fotos. Revisa el tamaño de los archivos.");
       return;
     }
 
@@ -58,32 +67,27 @@ function StepPhotos({ visit, onBack }) {
 
   return (
     <div>
-      <h3>Fotos</h3>
-
+      <h3>Fotos de la Visita</h3>
       {inputs.map((item, idx) => (
-        <div key={idx} style={{ marginBottom: 20 }}>
-          <input
-            type="file"
-            onChange={(e) => handleChange(idx, e)}
-          />
+        <div key={idx} style={{ marginBottom: 15, borderBottom: '1px solid #eee', paddingBottom: 10 }}>
+          <input type="file" onChange={(e) => handleChange(idx, e)} />
         </div>
       ))}
 
       <button
-        style={{ background: "#0f5132", color: "white", marginBottom: 20 }}
+        style={{ background: "#6c757d", color: "white", marginBottom: 20, padding: '5px 10px' }}
         onClick={addInput}
       >
-        + Añadir foto
+        + Añadir otra foto
       </button>
 
-      <div>
+      <div style={{ marginTop: 30 }}>
         <button onClick={onBack}>← Volver</button>
-
         <button
           onClick={finalizarVisita}
-          style={{ marginLeft: 10, background: "#0f5132", color: "white" }}
+          style={{ marginLeft: 10, background: "#0f5132", color: "white", fontWeight: 'bold' }}
         >
-          Finalizar visita
+          Finalizar y Generar Informe
         </button>
       </div>
     </div>
