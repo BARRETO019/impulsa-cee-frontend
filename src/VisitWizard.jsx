@@ -342,18 +342,46 @@ function StepDatosVivienda({ visit, onNext, onBack }) {
         </div>
 
         {/* Lista de plantas añadidas */}
-        {plantas.length > 0 && (
-          <ul style={{ listStyle: 'none', padding: 0, marginTop: '10px' }}>
-            {plantas.map((planta, index) => (
-              <li key={index} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px', background: '#fff', borderBottom: '1px solid #ddd' }}>
-                <span><strong>Planta {planta.numero}:</strong> {planta.altura} m</span>
-                <button onClick={() => eliminarPlanta(index)} style={{ background: '#ff4d4d', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
-                  Quitar
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+        {/* Lista de plantas añadidas con diseño corregido */}
+          {plantas.length > 0 && (
+              <div style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {plantas.map((planta, index) => (
+              <div 
+            key={index} 
+            style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            padding: '10px 15px', 
+            background: '#fff', 
+            border: '1px solid #ddd', 
+            borderRadius: '6px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+          }}
+        >
+          <span style={{ fontSize: '14px', color: '#333' }}>
+          <strong>Planta {planta.numero}:</strong> {planta.altura} m
+         </span>
+        
+        <button 
+          onClick={() => eliminarPlanta(index)} 
+          style={{ 
+            background: '#ff4d4d', 
+            color: 'white', 
+            border: 'none', 
+            padding: '6px 12px', 
+            borderRadius: '4px', 
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontWeight: 'bold'
+          }}
+        >
+          Quitar
+        </button>
+      </div>
+    ))}
+  </div>
+)}
       </div>
 
       {/* BOTONERA */}
