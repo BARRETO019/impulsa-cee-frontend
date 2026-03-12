@@ -426,7 +426,7 @@ function StepDatosVivienda({ visit, onNext, onBack }) {
   );
 }
 //////////////////////////////////////////////////////////////////
-// STEP 3 — ENVOLVENTE
+// STEP 3 — ENVOLVENTE 
 //////////////////////////////////////////////////////////////////
 function StepEnvelope({ visit, onNext, onBack }) {
   const token = localStorage.getItem('token');
@@ -437,6 +437,7 @@ function StepEnvelope({ visit, onNext, onBack }) {
     tipo: '',
     orientacion: '',
     largo: '',
+    ancho: '', 
     alto: '',
     observaciones: ''
   });
@@ -458,12 +459,25 @@ function StepEnvelope({ visit, onNext, onBack }) {
   };
 
   const añadirElemento = async () => {
-    if (!nuevo.tipo || !nuevo.largo || !nuevo.alto) {
-      alert("Completa tipo, largo y alto");
+    if (!nuevo.tipo) {
+      alert("Por favor, selecciona un tipo de elemento.");
       return;
     }
 
-    const superficieCalculada = Number(nuevo.largo) * Number(nuevo.alto);
+    const l = Number(nuevo.largo) || 0;
+    const an = Number(nuevo.ancho) || 0;
+    const al = Number(nuevo.alto) || 0;
+
+    let superficieCalculada = 0;
+
+    if (l > 0 && an > 0) superficieCalculada = l * an;         
+    else if (l > 0 && al > 0) superficieCalculada = l * al;    
+    else if (an > 0 && al > 0) superficieCalculada = an * al;  
+
+    if (superficieCalculada === 0) {
+      alert("Por favor, rellena al menos dos medidas (Largo, Ancho o Alto) para calcular los m².");
+      return;
+    }
 
     const response = await fetch(`${API_URL}/api/visits/${visit.id}/envelope`, {
       method: 'POST',
@@ -483,9 +497,33 @@ function StepEnvelope({ visit, onNext, onBack }) {
     if (response.ok) {
       const guardado = await response.json();
       setElementos([...elementos, guardado]);
-      setNuevo({ tipo: '', orientacion: '', largo: '', alto: '', observaciones: '' });
+      setNuevo({ tipo: '', orientacion: '', largo: '', ancho: '', alto: '', observaciones: '' });
     } else {
       alert("Error guardando elemento");
+    }
+  };
+
+  // BORRAR ELEMENTO DE LA BASE DE DATOS Y LA TABLA
+  const eliminarElemento = async (idElemento) => {
+    // Pequeño aviso para no borrar por error
+    if (!window.confirm("¿Seguro que quieres borrar este elemento?")) return;
+
+    try {
+      //petición DELETE al backend
+      const response = await fetch(`${API_URL}/api/visits/${visit.id}/envelope/${idElemento}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        // Filtramos la lista para quitar el elemento borrado visualmente sin recargar la página
+        setElementos(elementos.filter(el => el.id !== idElemento));
+      } else {
+        alert("Error al intentar borrar el elemento en el servidor.");
+      }
+    } catch (error) {
+      console.error("Error borrando:", error);
+      alert("Error de conexión al intentar borrar.");
     }
   };
 
@@ -494,12 +532,16 @@ function StepEnvelope({ visit, onNext, onBack }) {
       <h3>Step 3: Envolvente térmica</h3>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: '#f9f9f9', padding: '15px', borderRadius: '8px' }}>
+        
         <select name="tipo" value={nuevo.tipo} onChange={handleChange} style={{ padding: '8px' }}>
           <option value="">Seleccionar Tipo</option>
           <option value="Muro exterior">Muro exterior</option>
           <option value="Cubierta">Cubierta</option>
           <option value="Suelo">Suelo</option>
           <option value="Medianera">Medianera</option>
+          <option value="Partición horizontal">Partición horizontal</option>
+          <option value="Partición vertical">Partición vertical</option>
+          <option value="Partición vertical y horizontal">Partición vertical y horizontal</option>
         </select>
 
         <select name="orientacion" value={nuevo.orientacion} onChange={handleChange} style={{ padding: '8px' }}>
@@ -507,8 +549,12 @@ function StepEnvelope({ visit, onNext, onBack }) {
           <option>Norte</option><option>Sur</option><option>Este</option><option>Oeste</option>
         </select>
 
-        <input type="number" name="largo" placeholder="Largo (m)" value={nuevo.largo} onChange={handleChange} style={{ padding: '8px' }} />
-        <input type="number" name="alto" placeholder="Alto (m)" value={nuevo.alto} onChange={handleChange} style={{ padding: '8px' }} />
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <input type="number" name="largo" placeholder="Largo (m)" value={nuevo.largo} onChange={handleChange} style={{ flex: 1, padding: '8px' }} />
+          <input type="number" name="ancho" placeholder="Ancho (m)" value={nuevo.ancho} onChange={handleChange} style={{ flex: 1, padding: '8px' }} />
+          <input type="number" name="alto" placeholder="Alto (m)" value={nuevo.alto} onChange={handleChange} style={{ flex: 1, padding: '8px' }} />
+        </div>
+
         <input name="observaciones" placeholder="Observaciones (ej: Doble tabique)" value={nuevo.observaciones} onChange={handleChange} style={{ padding: '8px' }} />
 
         <button onClick={añadirElemento} style={{ background: '#4CAF50', color: 'white', padding: '10px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
@@ -519,20 +565,31 @@ function StepEnvelope({ visit, onNext, onBack }) {
       <div style={{ marginTop: 20 }}>
         <h4>Elementos en esta visita:</h4>
         {elementos.length === 0 ? <p>No hay elementos aún.</p> : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
             <thead>
               <tr style={{ background: '#ddd' }}>
                 <th style={{ border: '1px solid #ccc', padding: '8px' }}>Tipo</th>
                 <th style={{ border: '1px solid #ccc', padding: '8px' }}>Orient.</th>
                 <th style={{ border: '1px solid #ccc', padding: '8px' }}>m²</th>
+                <th style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'center' }}>Acción</th>
               </tr>
             </thead>
             <tbody>
               {elementos.map((el, i) => (
-                <tr key={i}>
+                // Es importante usar el id de la base de datos (el.id) para borrar correctamente
+                <tr key={el.id || i}>
                   <td style={{ border: '1px solid #ccc', padding: '8px' }}>{el.tipo}</td>
                   <td style={{ border: '1px solid #ccc', padding: '8px' }}>{el.orientacion}</td>
                   <td style={{ border: '1px solid #ccc', padding: '8px' }}>{el.superficie} m²</td>
+                  <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'center' }}>
+                    {/* BOTÓN DE BORRAR */}
+                    <button 
+                      onClick={() => eliminarElemento(el.id)}
+                      style={{ background: '#ff4d4d', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+                    >
+                      🗑️ Borrar
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
