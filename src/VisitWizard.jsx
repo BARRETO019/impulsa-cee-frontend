@@ -13,42 +13,66 @@ export default function VisitWizard({ visit, onBack }) {
   const nextStep = () => setStep(prev => prev + 1);
   const prevStep = () => setStep(prev => prev - 1);
 
+  // Definimos las pestañas de navegación
+  const pestañas = [
+    { id: 1, nombre: "1. Fachadas" },
+    { id: 2, nombre: "2. Vivienda" },
+    { id: 3, nombre: "3. Envolvente" },
+    { id: 4, nombre: "4. Ventanas" },
+    { id: 5, nombre: "5. Equipos" },
+    { id: 6, nombre: "6. Fotos" }
+  ];
+
   return (
     <div className="card">
 
       <h2>Visita técnica — {visit.direccion}</h2>
 
-      <div style={{ marginBottom: 20 }}>
-        Paso {step} de 6
+      {/* 🚀 NUEVO MENÚ DE NAVEGACIÓN (STEPPER) 🚀 */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '8px', 
+        overflowX: 'auto', 
+        marginBottom: '25px', 
+        paddingBottom: '10px',
+        borderBottom: '2px solid #eee' 
+      }}>
+        {pestañas.map((p) => (
+          <button
+            key={p.id}
+            onClick={() => setStep(p.id)}
+            style={{
+              padding: '8px 14px',
+              borderRadius: '6px',
+              border: 'none',
+              // Color azul si es el paso activo, gris clarito si no lo es
+              background: step === p.id ? '#007bff' : '#f0f4f8',
+              color: step === p.id ? 'white' : '#555',
+              cursor: 'pointer',
+              fontWeight: step === p.id ? 'bold' : 'normal',
+              whiteSpace: 'nowrap', // Evita que el texto se rompa en dos líneas
+              transition: 'all 0.2s ease-in-out'
+            }}
+          >
+            {p.nombre}
+          </button>
+        ))}
       </div>
 
-      {step === 1 && (
-        <StepGeneral visit={visit} onNext={nextStep} />
-      )}
+      {/* RENDERIZADO DE LOS PASOS (Igual que antes) */}
+      {step === 1 && <StepGeneral visit={visit} onNext={nextStep} />}
+      {step === 2 && <StepDatosVivienda visit={visit} onNext={nextStep} onBack={prevStep} />}
+      {step === 3 && <StepEnvelope visit={visit} onNext={nextStep} onBack={prevStep} />}
+      {step === 4 && <StepWindows visit={visit} onNext={nextStep} onBack={prevStep} />}
+      {step === 5 && <StepInstallations visit={visit} onNext={nextStep} onBack={prevStep} />}
+      {step === 6 && <StepPhotos visit={visit} onBack={prevStep} />}
 
-      {step === 2 && (
-        <StepDatosVivienda visit={visit} onNext={nextStep} onBack={prevStep} />
-      )}
-
-      {step === 3 && (
-        <StepEnvelope visit={visit} onNext={nextStep} onBack={prevStep} />
-      )}
-
-      {step === 4 && (
-        <StepWindows visit={visit} onNext={nextStep} onBack={prevStep} />
-      )}
-
-      {step === 5 && (
-        <StepInstallations visit={visit} onNext={nextStep} onBack={prevStep} />
-      )}
-
-      {step === 6 && (
-        <StepPhotos visit={visit} onBack={prevStep} />
-      )}
-
-      <button onClick={onBack} style={{ marginTop: 30 }}>
-        Volver al Dashboard
-      </button>
+      {/* BOTÓN GLOBAL DE SALIDA */}
+      <div style={{ marginTop: '40px', borderTop: '1px solid #eee', paddingTop: '20px', textAlign: 'center' }}>
+        <button onClick={onBack} style={{ background: '#333', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+          Guardar y Salir al Dashboard
+        </button>
+      </div>
 
     </div>
   );
