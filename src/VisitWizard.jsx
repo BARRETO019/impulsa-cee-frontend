@@ -13,7 +13,6 @@ export default function VisitWizard({ visit, onBack }) {
   const nextStep = () => setStep(prev => prev + 1);
   const prevStep = () => setStep(prev => prev - 1);
 
-  // Definimos las pestañas de navegación
   const pestañas = [
     { id: 1, nombre: "1. Fachadas" },
     { id: 2, nombre: "2. Vivienda" },
@@ -28,30 +27,21 @@ export default function VisitWizard({ visit, onBack }) {
 
       <h2>Visita técnica — {visit.direccion}</h2>
 
-      {/* 🚀 NUEVO MENÚ DE NAVEGACIÓN (STEPPER) 🚀 */}
+      {/* MENÚ DE NAVEGACIÓN (STEPPER) */}
       <div style={{ 
-        display: 'flex', 
-        gap: '8px', 
-        overflowX: 'auto', 
-        marginBottom: '25px', 
-        paddingBottom: '10px',
-        borderBottom: '2px solid #eee' 
+        display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '25px', 
+        paddingBottom: '10px', borderBottom: '2px solid #eee' 
       }}>
         {pestañas.map((p) => (
           <button
             key={p.id}
             onClick={() => setStep(p.id)}
             style={{
-              padding: '8px 14px',
-              borderRadius: '6px',
-              border: 'none',
-              // Color azul si es el paso activo, gris clarito si no lo es
+              padding: '8px 14px', borderRadius: '6px', border: 'none',
               background: step === p.id ? '#007bff' : '#f0f4f8',
               color: step === p.id ? 'white' : '#555',
-              cursor: 'pointer',
-              fontWeight: step === p.id ? 'bold' : 'normal',
-              whiteSpace: 'nowrap', // Evita que el texto se rompa en dos líneas
-              transition: 'all 0.2s ease-in-out'
+              cursor: 'pointer', fontWeight: step === p.id ? 'bold' : 'normal',
+              whiteSpace: 'nowrap', transition: 'all 0.2s ease-in-out'
             }}
           >
             {p.nombre}
@@ -59,13 +49,30 @@ export default function VisitWizard({ visit, onBack }) {
         ))}
       </div>
 
-      {/* RENDERIZADO DE LOS PASOS (Igual que antes) */}
-      {step === 1 && <StepGeneral visit={visit} onNext={nextStep} />}
-      {step === 2 && <StepDatosVivienda visit={visit} onNext={nextStep} onBack={prevStep} />}
-      {step === 3 && <StepEnvelope visit={visit} onNext={nextStep} onBack={prevStep} />}
-      {step === 4 && <StepWindows visit={visit} onNext={nextStep} onBack={prevStep} />}
-      {step === 5 && <StepInstallations visit={visit} onNext={nextStep} onBack={prevStep} />}
-      {step === 6 && <StepPhotos visit={visit} onBack={prevStep} />}
+      {/* 🚀 EL TRUCO: Ocultar con CSS (display: none) en lugar de destruir 🚀 */}
+      <div style={{ display: step === 1 ? 'block' : 'none' }}>
+        <StepGeneral visit={visit} onNext={nextStep} />
+      </div>
+
+      <div style={{ display: step === 2 ? 'block' : 'none' }}>
+        <StepDatosVivienda visit={visit} onNext={nextStep} onBack={prevStep} />
+      </div>
+
+      <div style={{ display: step === 3 ? 'block' : 'none' }}>
+        <StepEnvelope visit={visit} onNext={nextStep} onBack={prevStep} />
+      </div>
+
+      <div style={{ display: step === 4 ? 'block' : 'none' }}>
+        <StepWindows visit={visit} onNext={nextStep} onBack={prevStep} />
+      </div>
+
+      <div style={{ display: step === 5 ? 'block' : 'none' }}>
+        <StepInstallations visit={visit} onNext={nextStep} onBack={prevStep} />
+      </div>
+
+      <div style={{ display: step === 6 ? 'block' : 'none' }}>
+        <StepPhotos visit={visit} onBack={prevStep} />
+      </div>
 
       {/* BOTÓN GLOBAL DE SALIDA */}
       <div style={{ marginTop: '40px', borderTop: '1px solid #eee', paddingTop: '20px', textAlign: 'center' }}>
