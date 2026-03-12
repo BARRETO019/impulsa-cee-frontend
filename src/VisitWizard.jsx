@@ -904,6 +904,7 @@ function StepInstallations({ visit, onNext, onBack }) {
           <option>Gasóleo</option>
           <option>Electricidad</option>
           <option>Biomasa</option>
+          <option>Biomasa no densificada</option>
           <option>Propano</option>
         </select>
 
