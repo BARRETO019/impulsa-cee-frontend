@@ -479,7 +479,7 @@ function StepEnvelope({ visit, onNext, onBack }) {
       return;
     }
 
-    const response = await fetch(`${API_URL}/api/visits/${visit.id}/envelope`, {
+   const response = await fetch(`${API_URL}/api/visits/${visit.id}/envelope`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -490,7 +490,11 @@ function StepEnvelope({ visit, onNext, onBack }) {
         orientacion: nuevo.orientacion,
         superficie: superficieCalculada,
         nombre: nuevo.tipo,
-        observaciones: nuevo.observaciones
+        observaciones: nuevo.observaciones,
+        // datosssss 
+        largo: l,
+        ancho: an,
+        alto: al
       })
     });
 
