@@ -258,34 +258,29 @@ function StepDatosVivienda({ visit, onNext, onBack }) {
   // Estados para los datos generales
   const [dormitorios, setDormitorios] = useState("");
   const [motivo, setMotivo] = useState("");
+  const [potenciaInstalada, setPotenciaInstalada] = useState(""); // nuevo exigido 13/03
 
   // Estados para la lista de plantas
   const [plantas, setPlantas] = useState([]);
   const [alturaInput, setAlturaInput] = useState("");
 
-  // Función para añadir una planta a la lista
   const añadirPlanta = () => {
     if (!alturaInput) {
       alert("Por favor, introduce la altura de la planta.");
       return;
     }
-    // Añadimos la nueva planta numerándola automáticamente
     setPlantas([...plantas, { numero: plantas.length + 1, altura: alturaInput }]);
-    setAlturaInput(""); // Limpiamos el input
+    setAlturaInput("");
   };
 
-  // Función para quitar una planta por si se equivocan
   const eliminarPlanta = (index) => {
-    // Filtramos la que queremos borrar y renumeramos las demás
     const nuevasPlantas = plantas
       .filter((_, i) => i !== index)
       .map((p, i) => ({ ...p, numero: i + 1 }));
     setPlantas(nuevasPlantas);
   };
 
-  // Guardar en la base de datos y pasar al Step 3
   const guardarYContinuar = async () => {
-    // Convertimos el array de plantas en un texto para tu backend (ej: "Planta 1: 2.5m | Planta 2: 3m")
     const alturasTexto = plantas.map(p => `Planta ${p.numero}: ${p.altura}m`).join(" | ");
 
     try {
@@ -299,7 +294,8 @@ function StepDatosVivienda({ visit, onNext, onBack }) {
           dormitorios: dormitorios,
           motivo_certificado: motivo,
           num_plantas: plantas.length,
-          alturas_plantas: alturasTexto
+          alturas_plantas: alturasTexto,
+          potencia_instalada: potenciaInstalada // nuevo exigido 13/03
         }),
       });
 
@@ -318,16 +314,13 @@ function StepDatosVivienda({ visit, onNext, onBack }) {
     <div>
       <h3>Step 2: Datos de la Vivienda</h3>
 
-      {/* BLOQUE 1: Dormitorios y Motivo */}
       <div style={{ display: 'grid', gap: '15px', padding: '15px', background: '#f0f4f8', borderRadius: '8px', marginBottom: '20px' }}>
         <div>
           <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Número de dormitorios:</label>
           <input 
             type="number" 
-            min="0"
             value={dormitorios} 
             onChange={(e) => setDormitorios(e.target.value)} 
-            placeholder="Ej: 3"
             style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }} 
           />
         </div>
@@ -352,17 +345,32 @@ function StepDatosVivienda({ visit, onNext, onBack }) {
             <option value="Obra Nueva / Licencia 1ª Ocupación">Obra Nueva / Licencia 1ª Ocupación</option>
           </select>
         </div>
+
+        {/* CAMPO CONDICIONAL */}
+        {(motivo === '1º Solar' || motivo === '2º Solar') && (
+          <div style={{ padding: '10px', background: '#fff3cd', borderRadius: '4px', border: '1px solid #ffeeba' }}>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#856404' }}>
+              Potencia Instalada (kW):
+            </label>
+            <input 
+              type="number" 
+              step="0.01"
+              value={potenciaInstalada} 
+              onChange={(e) => setPotenciaInstalada(e.target.value)} 
+              placeholder="Ej: 5.25"
+              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }} 
+            />
+          </div>
+        )}
       </div>
 
-      {/* BLOQUE 2: Altura de Plantas (Añadir a lista) */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: '#f9f9f9', padding: '15px', borderRadius: '8px' }}>
         <h4 style={{ margin: 0 }}>Añadir Plantas</h4>
-        
         <div style={{ display: 'flex', gap: '10px' }}>
           <input 
             type="number" 
             step="0.01"
-            placeholder="Altura de la planta (ej: 2.5)" 
+            placeholder="Altura de la planta" 
             value={alturaInput} 
             onChange={(e) => setAlturaInput(e.target.value)} 
             style={{ flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
@@ -372,50 +380,20 @@ function StepDatosVivienda({ visit, onNext, onBack }) {
           </button>
         </div>
 
-        {/* Lista de plantas añadidas */}
-        {/* Lista de plantas añadidas con diseño corregido */}
-          {plantas.length > 0 && (
-              <div style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {plantas.map((planta, index) => (
-              <div 
-            key={index} 
-            style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            padding: '10px 15px', 
-            background: '#fff', 
-            border: '1px solid #ddd', 
-            borderRadius: '6px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-          }}
-        >
-          <span style={{ fontSize: '14px', color: '#333' }}>
-          <strong>Planta {planta.numero}:</strong> {planta.altura} m
-         </span>
-        
-        <button 
-          onClick={() => eliminarPlanta(index)} 
-          style={{ 
-            background: '#ff4d4d', 
-            color: 'white', 
-            border: 'none', 
-            padding: '6px 12px', 
-            borderRadius: '4px', 
-            cursor: 'pointer',
-            fontSize: '12px',
-            fontWeight: 'bold'
-          }}
-        >
-          Quitar
-        </button>
-      </div>
-    ))}
-  </div>
-)}
+        {plantas.length > 0 && (
+          <div style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {plantas.map((planta, index) => (
+              <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', background: '#fff', border: '1px solid #ddd', borderRadius: '6px' }}>
+                <span><strong>Planta {planta.numero}:</strong> {planta.altura} m</span>
+                <button onClick={() => eliminarPlanta(index)} style={{ background: '#ff4d4d', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>
+                  Quitar
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* BOTONERA */}
       <div style={{ marginTop: 30, display: 'flex', justifyContent: 'space-between' }}>
         <button onClick={onBack} style={{ padding: '10px 20px', cursor: 'pointer' }}>← Volver</button>
         <button onClick={guardarYContinuar} style={{ padding: '10px 20px', background: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
