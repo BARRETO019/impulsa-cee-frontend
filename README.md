@@ -1,4 +1,4 @@
-# ⚡ Impulsa Energía - App de Certificaciones Técnicas (v0.1)
+# ⚡ Impulsa Energía - App de Certificaciones Técnicas (v0.2)
 
 Aplicación web progresiva diseñada para facilitar la recogida de datos en campo por parte de los técnicos certificadores. Permite registrar datos de clientes, envolvente térmica, huecos e instalaciones directamente desde el móvil, sincronizando todo en la nube.
 
