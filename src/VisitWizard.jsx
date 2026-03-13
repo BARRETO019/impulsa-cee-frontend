@@ -601,15 +601,13 @@ function StepWindows({ visit, onNext, onBack }) {
     marco: '',
     vidrio: '',
     ancho: '',
-    alto: ''
+    alto: '',
+    orientacion: '' // 🆕
   });
   
-  // NUEVO: Estado para las fotos de la ventana
   const [fotos, setFotos] = useState([]);
-  // Referencia para limpiar el input de fotos después de añadir
   const fileInputRef = useRef(null);
 
-  // EFECTO: Carga las ventanas ya guardadas al entrar al paso
   useEffect(() => {
     fetch(`${API_URL}/api/visits/${visit.id}/windows`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -619,7 +617,7 @@ function StepWindows({ visit, onNext, onBack }) {
       if (Array.isArray(data)) setWindows(data);
     })
     .catch(err => console.error("Error cargando ventanas:", err));
-  }, [visit.id]);
+  }, [visit.id, API_URL, token]);
 
   const handleChange = (e) => {
     setNuevo({ ...nuevo, [e.target.name]: e.target.value });
@@ -630,21 +628,19 @@ function StepWindows({ visit, onNext, onBack }) {
   };
 
   const añadirVentana = async () => {
-    if (!nuevo.tipo || !nuevo.ancho || !nuevo.alto) {
-      alert("Completa tipo, ancho y alto");
+    if (!nuevo.tipo || !nuevo.ancho || !nuevo.alto || !nuevo.orientacion) {
+      alert("Completa tipo, ancho, alto y orientación");
       return;
     }
 
     const superficieCalculada = Number(nuevo.ancho) * Number(nuevo.alto);
-
-    // NUEVO: Usamos FormData porque ahora enviamos archivos
     const formData = new FormData();
     formData.append('nombre', nuevo.tipo);
     formData.append('marco', nuevo.marco);
     formData.append('vidrio', nuevo.vidrio);
     formData.append('superficie', superficieCalculada);
+    formData.append('orientacion', nuevo.orientacion); // 🆕
 
-    // Añadimos las fotos al FormData
     for (let i = 0; i < fotos.length; i++) {
       formData.append('fotos', fotos[i]);
     }
@@ -652,29 +648,22 @@ function StepWindows({ visit, onNext, onBack }) {
     try {
       const response = await fetch(`${API_URL}/api/visits/${visit.id}/windows`, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`
-          // OJO: Con FormData NO ponemos 'Content-Type'
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData
       });
 
       if (response.ok) {
         const guardada = await response.json();
         setWindows([...windows, guardada]);
-        
-        // Limpiamos el formulario para la siguiente ventana
-        setNuevo({ tipo: '', marco: '', vidrio: '', ancho: '', alto: '' });
+        setNuevo({ tipo: '', marco: '', vidrio: '', ancho: '', alto: '', orientacion: '' });
         setFotos([]);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
+        if (fileInputRef.current) fileInputRef.current.value = "";
       } else {
         alert("Error guardando ventana");
       }
     } catch (error) {
       console.error("Error en la petición:", error);
-      alert("Error de conexión al guardar la ventana");
+      alert("Error de conexión");
     }
   };
 
@@ -688,6 +677,14 @@ function StepWindows({ visit, onNext, onBack }) {
           <option>Ventana</option>
           <option>Puerta acristalada</option>
           <option>Ventanal</option>
+        </select>
+
+        <select name="orientacion" value={nuevo.orientacion} onChange={handleChange} style={{ padding: '8px', border: '2px solid #2196F3' }}>
+          <option value="">Seleccionar Orientación...</option>
+          <option value="Principal">Principal (Fachada)</option>
+          <option value="Trasera">Trasera (Patio)</option>
+          <option value="Lateral Derecho">Lateral Derecho</option>
+          <option value="Lateral Izquierdo">Lateral Izquierdo</option>
         </select>
 
         <select name="marco" value={nuevo.marco} onChange={handleChange} style={{ padding: '8px' }}>
@@ -710,7 +707,6 @@ function StepWindows({ visit, onNext, onBack }) {
           <input type="number" name="alto" placeholder="Alto (m)" value={nuevo.alto} onChange={handleChange} style={{ flex: 1, padding: '8px' }} />
         </div>
 
-        {/* NUEVO: Input para subir fotos de la ventana */}
         <div>
           <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#555' }}>
             Fotos de este hueco/ventana (opcional):
@@ -736,7 +732,7 @@ function StepWindows({ visit, onNext, onBack }) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', textAlign: 'left' }}>
             <thead>
               <tr style={{ background: '#eee' }}>
-                <th style={{ border: '1px solid #ccc', padding: '8px' }}>Tipo</th>
+                <th style={{ border: '1px solid #ccc', padding: '8px' }}>Tipo/Orientación</th>
                 <th style={{ border: '1px solid #ccc', padding: '8px' }}>Marco/Vidrio</th>
                 <th style={{ border: '1px solid #ccc', padding: '8px' }}>m²</th>
               </tr>
@@ -744,7 +740,10 @@ function StepWindows({ visit, onNext, onBack }) {
             <tbody>
               {windows.map((w, i) => (
                 <tr key={i}>
-                  <td style={{ border: '1px solid #ccc', padding: '8px' }}>{w.nombre || w.tipo}</td>
+                  <td style={{ border: '1px solid #ccc', padding: '8px' }}>
+                    <strong>{w.nombre || w.tipo}</strong><br/>
+                    <small style={{ color: '#666' }}>{w.orientacion_tecnica || w.orientacion}</small>
+                  </td>
                   <td style={{ border: '1px solid #ccc', padding: '8px' }}>{w.marco} / {w.vidrio}</td>
                   <td style={{ border: '1px solid #ccc', padding: '8px' }}>{w.superficie} m²</td>
                 </tr>
