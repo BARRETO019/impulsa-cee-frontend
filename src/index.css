@@ -35,34 +35,65 @@ h1 {
   line-height: 1.1;
 }
 
+/* Contenedor de botones para que no estén pegados */
+.card-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Espacio real entre botones */
+  margin-top: 15px;
+}
+
+/* Base de todos los botones */
 button {
   border-radius: 8px;
   border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+  padding: 10px 16px;
+  font-size: 0.9em;
+  font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  transition: all 0.2s ease;
+  width: 100%;
+  font-family: inherit;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* EDITAR - btn-primary (Azul sutil o Gris elegante) */
+.btn-primary {
+  background-color: #f1f5f9;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+}
+.btn-primary:hover {
+  background-color: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+/* FINALIZAR - btn-success (Verde corporativo) */
+.btn-success {
+  background-color: #166534;
+  color: white;
+}
+.btn-success:hover {
+  background-color: #14532d;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* BORRAR - btn-danger (Rojo suave para no asustar) */
+.btn-danger {
+  background-color: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fecdd3;
+}
+.btn-danger:hover {
+  background-color: #ffe4e6;
+  color: #9f1239;
+}
+
+/* CERRAR SESIÓN (Neutral al final) */
+.btn-logout {
+  background-color: #334155;
+  color: white;
+  margin-top: 24px;
+}
+.btn-logout:hover {
+  background-color: #1e293b;
 }

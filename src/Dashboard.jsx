@@ -252,11 +252,6 @@ export default function Dashboard({ onLogout }) {
     ))
   )}
 </div>
-
-<button onClick={onLogout} style={{ marginTop: 20 }}>
-  Cerrar sesión
-</button>
-
     </div>
   );
 }
