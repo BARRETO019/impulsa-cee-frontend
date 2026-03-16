@@ -1,8 +1,8 @@
-# ⚡ Impulsa Energía - App de Certificaciones Técnicas (v0.1)
+# ⚡ Impulsa Energía - App de Certificaciones Técnicas (v0.2)
 
 Aplicación web progresiva diseñada para facilitar la recogida de datos en campo por parte de los técnicos certificadores. Permite registrar datos de clientes, envolvente térmica, huecos e instalaciones directamente desde el móvil, sincronizando todo en la nube.
 
-## 🚀 Estado Actual: Versión 0.1 (MVP)
+## 🚀 Estado Actual: Versión 0.2 (MVP)
 Esta versión se centra en la recolección de datos robusta y a prueba de fallos, asegurando que los técnicos no pierdan información durante su visita.
 
 ### 🌟 Características Principales
@@ -22,12 +22,16 @@ Esta versión se centra en la recolección de datos robusta y a prueba de fallos
 
 ---
 
-## 🗺️ Roadmap: Próximos pasos (v0.2)
-Para la siguiente iteración, el objetivo principal será la automatización del papeleo:
-- [ ] **Generador de PDF:** Crear un endpoint en el backend que recoja toda la información de Neon y monte el borrador del certificado en PDF.
-- [ ] **Subida total de imágenes:** Replicar la subida a Drive para las fotos de Fachadas (Paso 1) y Equipos (Paso 5).
-- [ ] **Modo Offline (Opcional):** Implementar guardado en `LocalStorage` para que la app funcione en sótanos o salas de calderas sin cobertura, sincronizando con el servidor al recuperar la red.
+🗺️ Roadmap: Próximos pasos (v0.3.0)
+Tras completar con éxito la v0.2.0 (Generación de PDF y campos técnicos dinámicos), los siguientes objetivos son:
 
+[x] Generador de PDF: Implementado endpoint en Node.js que procesa datos de Neon y genera informes técnicos profesionales con pdfkit.
+
+[ ] Subida total de imágenes: Refinar la réplica en Drive para las fotos de Fachadas y Equipos, optimizando el anexo fotográfico del PDF.
+
+[ ] Modo Offline (PWA): Implementar LocalStorage y Service Workers para asegurar el funcionamiento en sótanos o salas de calderas sin cobertura.
+
+[ ] Dashboard de Administración: Vista para que la empresa pueda gestionar todas las visitas realizadas y descargar los PDFs de forma masiva.
 ---
 
 *Desarrollado para agilizar el trabajo de campo y eliminar la doble introducción de datos.*
