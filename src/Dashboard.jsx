@@ -202,48 +202,60 @@ export default function Dashboard({ onLogout }) {
           MIS VISITAS
       =========================== */}
       <div className="card">
-        <h2>Mis Visitas</h2>
+  <h2>Mis Visitas</h2>
 
-        {visits.length === 0 ? (
-          <p>No hay visitas aún.</p>
-        ) : (
-          visits.map((visit) => (
-            <div key={visit.id} className="card">
+  {visits.length === 0 ? (
+    <p>No hay visitas aún.</p>
+  ) : (
+    visits.map((visit) => (
+      <div key={visit.id} className="card visit-card">
 
-              <strong>{visit.direccion}</strong><br />
-              {visit.municipio} — {visit.estado}
+        <strong>{visit.direccion}</strong>
+        <br />
+        {visit.municipio} — {visit.estado}
 
-              {visit.estado !== 'finalizada' && (
-                <button
-                  onClick={() => finalizeVisit(visit.id)}
-                  style={{ marginTop: 10 }}
-                >
-                  Finalizar
-                </button>
-              )}
+        <div className="visit-buttons">
 
-              {/* Solo los usuarios CEO pueden borrar */}
-              {(userRole === 'ceo' || userRole === 'admin') && (
-                <button
-                onClick={() => borrarVisita(visit.id)}
-                style={{
-                marginLeft: 10,
-                background: "#8b0000",
-                color: "white"
-              }}
-              >
-               Borrar
-              </button>
-              )}
+          {/* EDITAR VISITA (si está en borrador) */}
+          {visit.estado === 'borrador' && (
+            <button
+              onClick={() => setVisitActiva(visit)}
+              className="btn-primary"
+            >
+              Editar visita
+            </button>
+          )}
 
-            </div>
-          ))
-        )}
+          {/* FINALIZAR VISITA */}
+          {visit.estado !== 'finalizada' && (
+            <button
+              onClick={() => finalizeVisit(visit.id)}
+              className="btn-success"
+            >
+              Finalizar
+            </button>
+          )}
+
+          {/* BORRAR (solo CEO o admin) */}
+          {(userRole === 'ceo' || userRole === 'admin') && (
+            <button
+              onClick={() => borrarVisita(visit.id)}
+              className="btn-danger"
+            >
+              Borrar
+            </button>
+          )}
+
+        </div>
+
       </div>
+    ))
+  )}
+</div>
 
-      <button onClick={onLogout} style={{ marginTop: 20 }}>
-        Cerrar sesión
-      </button>
+<button onClick={onLogout} style={{ marginTop: 20 }}>
+  Cerrar sesión
+</button>
 
     </div>
   );
