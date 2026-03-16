@@ -9,7 +9,7 @@ export default function Dashboard({ onLogout }) {
   const [visitActiva, setVisitActiva] = useState(null);
 
   // ==============================================
-  // 🔥 LEEMOS LA URL DEL BACKEND DESDE VITE
+  // LEEMOS LA URL DEL BACKEND DESDE VITE
   // ==============================================
   const API_URL = import.meta.env.VITE_API_URL;
 

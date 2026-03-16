@@ -136,7 +136,7 @@ export default function NewVisit({ onCreated, onCancel }) {
           <textarea name="motivo_certificado" placeholder="Motivo del certificado" onChange={handleChange} />
           <input name="dormitorios" type="number" placeholder="Nº dormitorios" onChange={handleChange} />
 
-          {/* 🌱 NUEVO BLOQUE DE PLANTAS */}
+          {/*  NUEVO BLOQUE DE PLANTAS */}
           <h4>Plantas</h4>
 
           <div style={{

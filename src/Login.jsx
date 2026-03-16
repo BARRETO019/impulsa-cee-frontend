@@ -2,14 +2,10 @@ import { useState } from 'react';
 import logo from './assets/logo.png';
 
 export default function Login({ onLogin }) {
-
   // Estados para guardar el correo y contraseña que escribe el usuario
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  // 🔥 IMPORTANTE:
   // Leemos la URL del backend desde la variable de entorno de Vite
-  // Esta variable la tienes que poner en Render: VITE_API_URL="https://..."
   const API_URL = import.meta.env.VITE_API_URL;
 
   // Función que se ejecuta cuando el usuario envía el formulario
@@ -18,7 +14,7 @@ export default function Login({ onLogin }) {
 
     try {
 
-      // Llamada al backend: enviamos email y contraseña al endpoint de login
+      // Llamada al backend, email y contraseña al endpoint de login
       // Usamos `${API_URL}` para que funcione tanto en local como en Render
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
@@ -34,7 +30,7 @@ export default function Login({ onLogin }) {
         return; // Salimos de la función
       }
 
-      // ⚡ Guardamos el rol y el token en localStorage para mantener sesión
+      // Guardamos el rol y el token en localStorage para mantener sesión
       localStorage.setItem("role", data.role);
       localStorage.setItem("token", data.token);
 
