@@ -560,7 +560,8 @@ function StepEnvelope({ visit, onNext, onBack }) {
           <select name="orientacion" value={nuevo.orientacion} onChange={handleChange} style={{ flex: 1, padding: '8px' }}>
             <option value="">Orientación</option>
             <option>Norte</option><option>Sur</option><option>Este</option><option>Oeste</option>
-            <option>NO</option><option>NE</option><option>SO</option><option>SE</option><option>lATERL IZQ</option><option>lATERL Drecho</option>
+            <option>NO</option><option>NE</option><option>SO</option><option>SE</option><option>PARTICION Horizontal</option>
+            <option>PARTICION Vertical</option><option>lATERL IZQ</option><option>lATERL Drecho</option>
           </select>
         </div>
 
