@@ -629,13 +629,14 @@ function StepWindows({ visit, onNext, onBack }) {
     alto: '',
     orientacion: '',
     proteccion_solar: '',
-    retranqueo: '', // 🆕 Medida en metros
-    voladizo: ''    // 🆕 Medida en metros
+    retranqueo: '',
+    voladizo: ''
   });
   
   const [fotos, setFotos] = useState([]);
   const fileInputRef = useRef(null);
 
+  // Cargar ventanas al inicio
   useEffect(() => {
     fetch(`${API_URL}/api/visits/${visit.id}/windows`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -655,6 +656,7 @@ function StepWindows({ visit, onNext, onBack }) {
     setFotos(e.target.files);
   };
 
+  // Función para añadir ventana nueva (con fotos)
   const añadirVentana = async () => {
     if (!nuevo.tipo || !nuevo.ancho || !nuevo.alto || !nuevo.orientacion || !nuevo.proteccion_solar) {
       alert("Completa todos los campos, incluyendo la protección solar (CE3X)");
@@ -671,8 +673,6 @@ function StepWindows({ visit, onNext, onBack }) {
     formData.append('proteccion_solar', nuevo.proteccion_solar);
     formData.append('largo', nuevo.ancho);
     formData.append('alto', nuevo.alto);
-    
-    // 🆕 Enviamos las medidas de sombras si existen
     formData.append('retranqueo', nuevo.retranqueo || 0);
     formData.append('voladizo', nuevo.voladizo || 0);
 
@@ -693,22 +693,61 @@ function StepWindows({ visit, onNext, onBack }) {
         setNuevo({ tipo: '', marco: '', vidrio: '', ancho: '', alto: '', orientacion: '', proteccion_solar: '', retranqueo: '', voladizo: '' });
         setFotos([]);
         if (fileInputRef.current) fileInputRef.current.value = "";
-      } else {
-        alert("Error guardando ventana");
       }
     } catch (error) {
-      console.error("Error en la petición:", error);
-      alert("Error de conexión");
+      console.error("Error:", error);
     }
+  };
+
+  // 🚀 FUNCIÓN PARA DUPLICAR (Solo el botón +)
+  const duplicarVentana = async (v) => {
+    const datosCopia = {
+      nombre: v.nombre,
+      marco: v.marco,
+      vidrio: v.vidrio,
+      superficie: v.superficie,
+      orientacion: v.orientacion,
+      proteccion_solar: v.proteccion_solar,
+      largo: v.largo,
+      alto: v.alto,
+      retranqueo: v.retranqueo || 0,
+      voladizo: v.voladizo || 0
+    };
+
+    try {
+      const response = await fetch(`${API_URL}/api/visits/${visit.id}/windows`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify(datosCopia)
+      });
+
+      if (response.ok) {
+        const guardada = await response.json();
+        setWindows([...windows, guardada]);
+      }
+    } catch (error) {
+      console.error("Error duplicando:", error);
+    }
+  };
+
+  const eliminarVentana = async (id) => {
+    if (!window.confirm("¿Eliminar ventana?")) return;
+    const res = await fetch(`${API_URL}/api/visits/${visit.id}/windows/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) setWindows(windows.filter(w => w.id !== id));
   };
 
   return (
     <div>
-      <h3>Step 4: Huecos (Ventanas y Protecciones)</h3>
+      <h3 style={{ color: '#166534' }}>Paso 4: Ventanas y Protecciones</h3>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#f0f4f8', padding: '15px', borderRadius: '12px', border: '1px solid #d1d5db' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #d1d5db' }}>
         
-        {/* Tipo y Orientación */}
         <div style={{ display: 'flex', gap: '10px' }}>
             <select name="tipo" value={nuevo.tipo} onChange={handleChange} style={{ flex: 1, padding: '10px', borderRadius: '8px' }}>
               <option value="">Tipo de Hueco</option>
@@ -719,18 +758,11 @@ function StepWindows({ visit, onNext, onBack }) {
 
             <select name="orientacion" value={nuevo.orientacion} onChange={handleChange} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #2196F3' }}>
               <option value="">Orientación...</option>
-              <option value="Norte">Norte</option>
-              <option value="Sur">Sur</option>
-              <option value="Este">Este</option>
-              <option value="Oeste">Oeste</option>
-              <option value="NO">NO</option>
-              <option value="NE">NE</option>
-              <option value="SO">SO</option>
-              <option value="SE">SE</option>
+              <option>Norte</option><option>Sur</option><option>Este</option><option>Oeste</option>
+              <option>NO</option><option>NE</option><option>SO</option><option>SE</option>
             </select>
         </div>
 
-        {/* PROTECCIÓN SOLAR CE3X */}
         <select 
           name="proteccion_solar" 
           value={nuevo.proteccion_solar} 
@@ -739,99 +771,60 @@ function StepWindows({ visit, onNext, onBack }) {
         >
           <option value="">Seleccionar Protección Solar (CE3X)</option>
           <option value="Sin protección">Sin protección</option>
-          <option value="Retranqueo">Retranqueo (Sombras laterales/sup)</option>
-          <option value="Voladizo">Voladizo (Alero/Saliente)</option>
+          <option value="Retranqueo">Retranqueo (Sombras)</option>
+          <option value="Voladizo">Voladizo (Alero)</option>
           <option value="Retranqueo y Voladizo">Ambos (Retranqueo + Voladizo)</option>
-          <option value="Persiana de PVC">Persiana de PVC</option>
-          <option value="Persiana de Aluminio">Persiana de Aluminio</option>
+          <option value="Persiana">Persiana</option>
           <option value="Toldo">Toldo</option>
         </select>
 
-        {/* 🚀 LÓGICA CONDICIONAL: APARECE SI SE ELIGE RETRANQUEO O VOLADIZO 🚀 */}
+        {/* LÓGICA CONDICIONAL DE METROS */}
         {(nuevo.proteccion_solar.includes('Retranqueo') || nuevo.proteccion_solar.includes('Voladizo')) && (
-          <div style={{ 
-            display: 'flex', 
-            gap: '10px', 
-            background: '#fffbe6', 
-            padding: '12px', 
-            borderRadius: '8px', 
-            border: '1px solid #ffe58f' 
-          }}>
+          <div style={{ display: 'flex', gap: '10px', background: '#fffbe6', padding: '12px', borderRadius: '8px', border: '1px solid #ffe58f' }}>
             {nuevo.proteccion_solar.includes('Retranqueo') && (
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: '11px', color: '#856404', fontWeight: 'bold' }}>Medida Retranqueo (m)</label>
-                <input 
-                  type="number" 
-                  name="retranqueo" 
-                  placeholder="0.15" 
-                  value={nuevo.retranqueo} 
-                  onChange={handleChange} 
-                  style={{ width: '100%', padding: '8px', marginTop: '4px', border: '1px solid #ffe58f', borderRadius: '4px' }} 
-                />
+                <label style={{ fontSize: '11px', color: '#856404', fontWeight: 'bold' }}>Retranqueo (m)</label>
+                <input type="number" name="retranqueo" placeholder="0.15" value={nuevo.retranqueo} onChange={handleChange} style={{ width: '100%', padding: '8px', border: '1px solid #ffe58f' }} />
               </div>
             )}
             {nuevo.proteccion_solar.includes('Voladizo') && (
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: '11px', color: '#856404', fontWeight: 'bold' }}>Medida Voladizo (m)</label>
-                <input 
-                  type="number" 
-                  name="voladizo" 
-                  placeholder="0.50" 
-                  value={nuevo.voladizo} 
-                  onChange={handleChange} 
-                  style={{ width: '100%', padding: '8px', marginTop: '4px', border: '1px solid #ffe58f', borderRadius: '4px' }} 
-                />
+                <label style={{ fontSize: '11px', color: '#856404', fontWeight: 'bold' }}>Voladizo (m)</label>
+                <input type="number" name="voladizo" placeholder="0.50" value={nuevo.voladizo} onChange={handleChange} style={{ width: '100%', padding: '8px', border: '1px solid #ffe58f' }} />
               </div>
             )}
           </div>
         )}
 
-        {/* Marco y Vidrio */}
         <div style={{ display: 'flex', gap: '10px' }}>
-            <select name="marco" value={nuevo.marco} onChange={handleChange} style={{ flex: 1, padding: '10px', borderRadius: '8px' }}>
-              <option value="">Marco</option>
-              <option>Aluminio</option>
-              <option>PVC</option>
-              <option>Madera</option>
-              <option>Aluminio RPT</option>
-            </select>
-
-            <select name="vidrio" value={nuevo.vidrio} onChange={handleChange} style={{ flex: 1, padding: '10px', borderRadius: '8px' }}>
-              <option value="">Vidrio</option>
-              <option>Simple</option>
-              <option>Doble</option>
-              <option>Triple</option>
-            </select>
+          <input type="number" name="ancho" placeholder="Ancho (m)" value={nuevo.ancho} onChange={handleChange} style={{ flex: 1, padding: '10px' }} />
+          <input type="number" name="alto" placeholder="Alto (m)" value={nuevo.alto} onChange={handleChange} style={{ flex: 1, padding: '10px' }} />
         </div>
 
-        {/* Dimensiones */}
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: '11px', color: '#666' }}>Ancho (m)</label>
-            <input type="number" name="ancho" placeholder="0.00" value={nuevo.ancho} onChange={handleChange} style={{ width: '100%', padding: '10px' }} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: '11px', color: '#666' }}>Alto (m)</label>
-            <input type="number" name="alto" placeholder="0.00" value={nuevo.alto} onChange={handleChange} style={{ width: '100%', padding: '10px' }} />
-          </div>
-        </div>
-
-        {/* Fotos */}
-        <div>
-          <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#555' }}>Fotos:</label>
-          <input type="file" multiple accept="image/*" ref={fileInputRef} onChange={handleFileChange} style={{ width: '100%', padding: '8px', background: '#fff' }} />
-        </div>
-
-        <button onClick={añadirVentana} style={{ background: '#166534', color: 'white', padding: '14px', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}>
+        <button onClick={añadirVentana} style={{ background: '#166534', color: 'white', padding: '14px', borderRadius: '10px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>
           + Guardar Ventana y Protección
         </button>
       </div>
 
+      {/* LISTADO CON BOTÓN DE DUPLICAR (+) */}
+      <div style={{ marginTop: '25px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {windows.map((w) => (
+          <div key={w.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: 'white', borderRadius: '10px', border: '1px solid #e5e7eb' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{w.nombre} - {w.orientacion}</div>
+              <div style={{ fontSize: '12px', color: '#6b7280' }}>{w.largo}x{w.alto}m | {w.proteccion_solar}</div>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <button onClick={() => duplicarVentana(w)} style={{ width: '30px', height: '30px', borderRadius: '50%', border: '1px solid #166534', background: '#ecfdf5', color: '#166534', fontSize: '20px', cursor: 'pointer', paddingBottom: '2px' }}>+</button>
+              <button onClick={() => eliminarVentana(w.id)} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '20px', cursor: 'pointer' }}>×</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
       <div style={{ marginTop: 30, display: 'flex', justifyContent: 'space-between' }}>
-        <button onClick={onBack} style={{ padding: '10px 20px', cursor: 'pointer', borderRadius: '8px' }}>← Volver</button>
-        <button onClick={onNext} style={{ padding: '10px 20px', background: '#007bff', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
-          Siguiente →
-        </button>
+        <button onClick={onBack} style={{ padding: '10px 20px', borderRadius: '8px' }}>← Volver</button>
+        <button onClick={onNext} style={{ padding: '10px 20px', background: '#007bff', color: 'white', border: 'none', borderRadius: '8px' }}>Siguiente →</button>
       </div>
     </div>
   );
