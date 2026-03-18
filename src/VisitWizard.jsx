@@ -7,49 +7,67 @@ import StepPhotos from "./StepPhotos";
  * ==========================================================
  */
 export default function VisitWizard({ visit, onBack }) {
-
   const [step, setStep] = useState(1);
 
   const nextStep = () => setStep(prev => prev + 1);
   const prevStep = () => setStep(prev => prev - 1);
 
   const pestañas = [
-    { id: 1, nombre: "1. Fachadas" },
-    { id: 2, nombre: "2. Vivienda" },
-    { id: 3, nombre: "3. Envolvente" },
-    { id: 4, nombre: "4. Ventanas" },
-    { id: 5, nombre: "5. Equipos" },
-    { id: 6, nombre: "6. Fotos" }
+    { id: 1, nombre: "Fachadas" },
+    { id: 2, nombre: "Vivienda" },
+    { id: 3, nombre: "Envolvente" },
+    { id: 4, nombre: "Ventanas" },
+    { id: 5, nombre: "Equipos" },
+    { id: 6, nombre: "Fotos" }
   ];
 
   return (
-    <div className="card">
+    <div className="card" style={{ padding: '15px' }}>
+      
+      {/* Título más integrado */}
+      <h2 style={{ fontSize: '1.2rem', marginBottom: '15px', color: '#166534', borderLeft: '4px solid #166534', paddingLeft: '10px' }}>
+        Visita: <span style={{ fontWeight: 'normal', color: '#444' }}>{visit.direccion}</span>
+      </h2>
 
-      <h2>Visita técnica — {visit.direccion}</h2>
-
-      {/* MENÚ DE NAVEGACIÓN (STEPPER) */}
+      {/* MENÚ DE NAVEGACIÓN (STEPPER PROFESIONAL) */}
       <div style={{ 
-        display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '25px', 
-        paddingBottom: '10px', borderBottom: '2px solid #eee' 
+        display: 'flex', 
+        gap: '8px', 
+        overflowX: 'auto', 
+        marginBottom: '20px', 
+        paddingBottom: '10px', 
+        borderBottom: '1px solid #eee',
+        // Ocultar barra de scroll estéticamente
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+        WebkitOverflowScrolling: 'touch'
       }}>
         {pestañas.map((p) => (
           <button
             key={p.id}
             onClick={() => setStep(p.id)}
             style={{
-              padding: '8px 14px', borderRadius: '6px', border: 'none',
-              background: step === p.id ? '#007bff' : '#f0f4f8',
-              color: step === p.id ? 'white' : '#555',
-              cursor: 'pointer', fontWeight: step === p.id ? 'bold' : 'normal',
-              whiteSpace: 'nowrap', transition: 'all 0.2s ease-in-out'
+              padding: '6px 16px',
+              borderRadius: '20px', // Forma de pastilla
+              border: '1px solid',
+              borderColor: step === p.id ? '#166534' : '#e5e7eb',
+              background: step === p.id ? '#166534' : '#fff',
+              color: step === p.id ? '#fff' : '#666',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '600',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.2s ease',
+              flexShrink: 0, // Evita que se aplasten
+              boxShadow: step === p.id ? '0 2px 4px rgba(22,101,52,0.2)' : 'none'
             }}
           >
-            {p.nombre}
+            {p.id}. {p.nombre}
           </button>
         ))}
       </div>
 
-      {/* 🚀 EL TRUCO: Ocultar con CSS (display: none) en lugar de destruir 🚀 */}
+      {/* CONTENIDO DE LOS PASOS */}
       <div style={{ display: step === 1 ? 'block' : 'none' }}>
         <StepGeneral visit={visit} onNext={nextStep} />
       </div>
@@ -74,10 +92,23 @@ export default function VisitWizard({ visit, onBack }) {
         <StepPhotos visit={visit} onBack={prevStep} />
       </div>
 
-      {/* BOTÓN GLOBAL DE SALIDA */}
-      <div style={{ marginTop: '40px', borderTop: '1px solid #eee', paddingTop: '20px', textAlign: 'center' }}>
-        <button onClick={onBack} style={{ background: '#333', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-          Guardar y Salir al Dashboard
+      {/* BOTÓN GLOBAL DE SALIDA (Más discreto) */}
+      <div style={{ marginTop: '30px', borderTop: '1px solid #eee', paddingTop: '15px' }}>
+        <button 
+          onClick={onBack} 
+          style={{ 
+            background: '#f8f9fa', 
+            color: '#666', 
+            padding: '8px 15px', 
+            border: '1px solid #ddd', 
+            borderRadius: '6px', 
+            fontSize: '13px',
+            width: 'auto', // Que no ocupe todo el ancho para que no sea tosco
+            display: 'block',
+            margin: '0 auto'
+          }}
+        >
+          ✕ Guardar y salir
         </button>
       </div>
 
