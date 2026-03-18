@@ -437,228 +437,194 @@ function StepDatosVivienda({ visit, onNext, onBack }) {
 //////////////////////////////////////////////////////////////////
 // STEP 3 — ENVOLVENTE 
 //////////////////////////////////////////////////////////////////
-function StepEnvelope({ visit, onNext, onBack }) {
+function StepWindows({ visit, onNext, onBack }) {
   const token = localStorage.getItem('token');
   const API_URL = import.meta.env.VITE_API_URL;
 
-  const [elementos, setElementos] = useState([]);
+  const [windows, setWindows] = useState([]);
   const [nuevo, setNuevo] = useState({
     tipo: '',
-    orientacion: '',
-    largo: '',
-    ancho: '', // Espesor
+    marco: '',
+    vidrio: '',
+    ancho: '',
     alto: '',
-    observaciones: ''
+    orientacion: '',
+    proteccion_solar: '',
+    medida: '' // 👈 NUEVO
   });
 
-  // Cargar elementos existentes
+  const [fotos, setFotos] = useState([]);
+  const fileInputRef = useRef(null);
+
   useEffect(() => {
-    fetch(`${API_URL}/api/visits/${visit.id}/envelope`, {
+    fetch(`${API_URL}/api/visits/${visit.id}/windows`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-    .then(res => res.json())
-    .then(data => {
-      if (Array.isArray(data)) setElementos(data);
-    })
-    .catch(err => console.error("Error cargando envolvente:", err));
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setWindows(data);
+      })
+      .catch(err => console.error("Error cargando ventanas:", err));
   }, [visit.id, API_URL, token]);
 
   const handleChange = (e) => {
     setNuevo({ ...nuevo, [e.target.name]: e.target.value });
   };
 
-  const añadirElemento = async () => {
-    if (!nuevo.tipo) {
-      alert("Por favor, selecciona un tipo de elemento.");
+  const handleFileChange = (e) => {
+    setFotos(e.target.files);
+  };
+
+  const añadirVentana = async () => {
+    if (!nuevo.tipo || !nuevo.ancho || !nuevo.alto || !nuevo.orientacion || !nuevo.proteccion_solar) {
+      alert("Completa todos los campos");
       return;
     }
 
-    const l = Number(nuevo.largo) || 0;
-    const an = Number(nuevo.ancho) || 0;
-    const al = Number(nuevo.alto) || 0;
+    const superficieCalculada = Number(nuevo.ancho) * Number(nuevo.alto);
 
-    // Lógica de cálculo de superficie para CE3X
-    let superficieCalculada = 0;
-    if (l > 0 && al > 0) superficieCalculada = l * al; // Muros
-    else if (l > 0 && an > 0) superficieCalculada = l * an; // Suelos/Cubiertas
-    else if (an > 0 && al > 0) superficieCalculada = an * al;
+    const formData = new FormData();
+    formData.append('nombre', nuevo.tipo);
+    formData.append('marco', nuevo.marco);
+    formData.append('vidrio', nuevo.vidrio);
+    formData.append('superficie', superficieCalculada);
+    formData.append('orientacion', nuevo.orientacion);
+    formData.append('proteccion_solar', nuevo.proteccion_solar);
+    formData.append('largo', nuevo.ancho);
+    formData.append('alto', nuevo.alto);
 
-    if (superficieCalculada === 0) {
-      alert("Introduce al menos dos medidas para calcular la superficie.");
-      return;
+    // 👇 NUEVO
+    formData.append('medida', nuevo.medida);
+
+    for (let i = 0; i < fotos.length; i++) {
+      formData.append('fotos', fotos[i]);
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/visits/${visit.id}/envelope`, {
+      const response = await fetch(`${API_URL}/api/visits/${visit.id}/windows`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          tipo: nuevo.tipo,
-          orientacion: nuevo.orientacion || 'N/A',
-          superficie: superficieCalculada,
-          nombre: nuevo.tipo,
-          observaciones: nuevo.observaciones,
-          largo: l,
-          ancho: an,
-          alto: al
-        })
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
       });
 
       if (response.ok) {
-        const guardado = await response.json();
-        setElementos([...elementos, guardado]);
+        const guardada = await response.json();
+        setWindows([...windows, guardada]);
+
         // Reset
-        setNuevo({ tipo: '', orientacion: '', largo: '', ancho: '', alto: '', observaciones: '' });
+        setNuevo({
+          tipo: '',
+          marco: '',
+          vidrio: '',
+          ancho: '',
+          alto: '',
+          orientacion: '',
+          proteccion_solar: '',
+          medida: ''
+        });
+
+        setFotos([]);
+        if (fileInputRef.current) fileInputRef.current.value = "";
       } else {
-        alert("Error guardando el elemento");
+        alert("Error guardando ventana");
       }
     } catch (error) {
       console.error("Error en la petición:", error);
-    }
-  };
-
-  const eliminarElemento = async (idElemento) => {
-    if (!window.confirm("¿Seguro que quieres borrar este elemento?")) return;
-    try {
-      const response = await fetch(`${API_URL}/api/visits/${visit.id}/envelope/${idElemento}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.ok) {
-        setElementos(elementos.filter(el => el.id !== idElemento));
-      }
-    } catch (error) {
-      console.error("Error borrando:", error);
+      alert("Error de conexión");
     }
   };
 
   return (
     <div>
-      <h3 style={{ fontSize: '1.1rem', color: '#166534', marginBottom: '15px' }}>
-        Paso 3: Envolvente Térmica y Particiones
-      </h3>
+      <h3>Step 4: Huecos (Ventanas y Protecciones)</h3>
 
-      {/* FORMULARIO DE ENTRADA */}
-      <div style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: '12px', 
-        background: '#f8fafc', 
-        padding: '15px', 
-        borderRadius: '12px', 
-        border: '1px solid #e2e8f0' 
-      }}>
-        
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: '#f0f4f8', padding: '15px', borderRadius: '8px' }}>
+
+        {/* Tipo y Orientación */}
         <div style={{ display: 'flex', gap: '10px' }}>
-          <select name="tipo" value={nuevo.tipo} onChange={handleChange} style={{ flex: 1, padding: '10px', borderRadius: '8px' }}>
-            <option value="">Seleccionar Tipo...</option>
-            <optgroup label="Fachadas">
-              <option value="Muro exterior">Muro exterior</option>
-              <option value="Medianera">Medianera</option>
-            </optgroup>
-            <optgroup label="Particiones">
-              <option value="Partición horizontal">Partición horizontal</option>
-              <option value="Partición vertical">Partición vertical</option>
-            </optgroup>
-            <optgroup label="Otros">
-              <option value="Cubierta">Cubierta</option>
-              <option value="Suelo">Suelo</option>
-            </optgroup>
+          <select name="tipo" value={nuevo.tipo} onChange={handleChange} style={{ flex: 1 }}>
+            <option value="">Tipo de Hueco</option>
+            <option>Ventana</option>
+            <option>Puerta acristalada</option>
+            <option>Ventanal</option>
           </select>
 
-          <select name="orientacion" value={nuevo.orientacion} onChange={handleChange} style={{ flex: 1, padding: '10px', borderRadius: '8px' }}>
+          <select name="orientacion" value={nuevo.orientacion} onChange={handleChange} style={{ flex: 1 }}>
             <option value="">Orientación...</option>
-            <option>N</option><option>S</option><option>E</option><option>O</option>
-            <option>NE</option><option>NO</option><option>SE</option><option>SO</option>
-            <option>Horizontal</option>
+            <option value="Norte">Norte</option>
+            <option value="Sur">Sur</option>
+            <option value="Este">Este</option>
+            <option value="Oeste">Oeste</option>
           </select>
         </div>
 
-        {/* MEDIDAS */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+        {/* PROTECCIÓN SOLAR */}
+        <select name="proteccion_solar" value={nuevo.proteccion_solar} onChange={handleChange}>
+          <option value="">Seleccionar Protección Solar</option>
+          <option value="Sin protección">Sin protección</option>
+          <option value="Retanqueo">Retanqueo</option>
+          <option value="Voladizo">Voladizo</option>
+          <option value="Persiana de Aluminio">Persiana de Aluminio</option>
+          <option value="Toldo">Toldo</option>
+          <option value="Lamas horizontales">Lamas horizontales</option>
+          <option value="Lamas verticales">Lamas verticales</option>
+        </select>
+
+        {/* 👇 INPUT DINÁMICO */}
+        {(nuevo.proteccion_solar === "Retanqueo" || nuevo.proteccion_solar === "Voladizo") && (
           <div>
-            <label style={{ fontSize: '11px', color: '#64748b' }}>Largo (m)</label>
-            <input type="number" name="largo" placeholder="0.00" value={nuevo.largo} onChange={handleChange} style={{ width: '100%', padding: '10px' }} />
+            <label>Medida (m)</label>
+            <input
+              type="number"
+              name="medida"
+              value={nuevo.medida}
+              onChange={handleChange}
+              placeholder="Ej: 0.50"
+            />
           </div>
-          <div>
-            <label style={{ fontSize: '11px', color: '#64748b' }}>Ancho/Esp. (m)</label>
-            <input type="number" name="ancho" placeholder="0.00" value={nuevo.ancho} onChange={handleChange} style={{ width: '100%', padding: '10px' }} />
-          </div>
-          <div>
-            <label style={{ fontSize: '11px', color: '#64748b' }}>Alto (m)</label>
-            <input type="number" name="alto" placeholder="0.00" value={nuevo.alto} onChange={handleChange} style={{ width: '100%', padding: '10px' }} />
-          </div>
+        )}
+
+        {/* Marco y Vidrio */}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <select name="marco" value={nuevo.marco} onChange={handleChange} style={{ flex: 1 }}>
+            <option value="">Marco</option>
+            <option>Aluminio</option>
+            <option>PVC</option>
+            <option>Madera</option>
+            <option>Aluminio RPT</option>
+          </select>
+
+          <select name="vidrio" value={nuevo.vidrio} onChange={handleChange} style={{ flex: 1 }}>
+            <option value="">Vidrio</option>
+            <option>Simple</option>
+            <option>Doble</option>
+            <option>Triple</option>
+          </select>
         </div>
 
-        <input 
-          name="observaciones" 
-          placeholder="Observaciones (ej: Ladrillo hueco, cámara aire...)" 
-          value={nuevo.observaciones} 
-          onChange={handleChange} 
-          style={{ padding: '10px', borderRadius: '8px' }} 
+        {/* Dimensiones */}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <input type="number" name="ancho" placeholder="Ancho (m)" value={nuevo.ancho} onChange={handleChange} />
+          <input type="number" name="alto" placeholder="Alto (m)" value={nuevo.alto} onChange={handleChange} />
+        </div>
+
+        {/* Fotos */}
+        <input
+          type="file"
+          multiple
+          accept="image/*"
+          ref={fileInputRef}
+          onChange={handleFileChange}
         />
 
-        <button 
-          onClick={añadirElemento} 
-          style={{ 
-            background: '#166534', 
-            color: 'white', 
-            padding: '14px', 
-            border: 'none', 
-            borderRadius: '10px', 
-            fontWeight: 'bold',
-            cursor: 'pointer'
-          }}
-        >
-          + Añadir Elemento
+        <button onClick={añadirVentana}>
+          + Guardar Ventana
         </button>
       </div>
 
-      {/* TABLA DE RESUMEN */}
-      <div style={{ marginTop: '25px', overflowX: 'auto' }}>
-        <h4 style={{ fontSize: '14px', color: '#475569', marginBottom: '10px' }}>Resumen de la envolvente:</h4>
-        {elementos.length === 0 ? <p style={{ fontSize: '13px', color: '#94a3b8' }}>No hay elementos registrados.</p> : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '400px' }}>
-            <thead>
-              <tr style={{ background: '#f1f5f9' }}>
-                <th style={{ border: '1px solid #e2e8f0', padding: '10px', textAlign: 'left' }}>Tipo</th>
-                <th style={{ border: '1px solid #e2e8f0', padding: '10px', textAlign: 'left' }}>Medidas</th>
-                <th style={{ border: '1px solid #e2e8f0', padding: '10px', textAlign: 'left' }}>Superficie</th>
-                <th style={{ border: '1px solid #e2e8f0', padding: '10px', textAlign: 'center' }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {elementos.map((el) => (
-                <tr key={el.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '10px' }}>
-                    <strong>{el.tipo}</strong><br/><small style={{ color: '#64748b' }}>{el.orientacion}</small>
-                  </td>
-                  <td style={{ padding: '10px' }}>{el.largo} x {el.alto || el.ancho}m</td>
-                  <td style={{ padding: '10px', fontWeight: 'bold' }}>{el.superficie} m²</td>
-                  <td style={{ padding: '10px', textAlign: 'center' }}>
-                    <button 
-                      onClick={() => eliminarElemento(el.id)} 
-                      style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '16px' }}
-                    >
-                      ×
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      {/* NAVEGACIÓN */}
-      <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'space-between', gap: '15px' }}>
-        <button onClick={onBack} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff' }}>← Volver</button>
-        <button onClick={onNext} style={{ flex: 2, padding: '12px', borderRadius: '8px', border: 'none', background: '#007bff', color: 'white', fontWeight: 'bold' }}>
-          Continuar (Ventanas) →
-        </button>
+      <div style={{ marginTop: 30, display: 'flex', justifyContent: 'space-between' }}>
+        <button onClick={onBack}>← Volver</button>
+        <button onClick={onNext}>Siguiente →</button>
       </div>
     </div>
   );
