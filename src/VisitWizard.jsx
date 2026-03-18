@@ -37,7 +37,6 @@ export default function VisitWizard({ visit, onBack }) {
         marginBottom: '20px', 
         paddingBottom: '10px', 
         borderBottom: '1px solid #eee',
-        // Ocultar barra de scroll estéticamente
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
         WebkitOverflowScrolling: 'touch'
@@ -48,7 +47,7 @@ export default function VisitWizard({ visit, onBack }) {
             onClick={() => setStep(p.id)}
             style={{
               padding: '6px 16px',
-              borderRadius: '20px', // Forma de pastilla
+              borderRadius: '20px',
               border: '1px solid',
               borderColor: step === p.id ? '#166534' : '#e5e7eb',
               background: step === p.id ? '#166534' : '#fff',
@@ -58,7 +57,7 @@ export default function VisitWizard({ visit, onBack }) {
               fontWeight: '600',
               whiteSpace: 'nowrap',
               transition: 'all 0.2s ease',
-              flexShrink: 0, // Evita que se aplasten
+              flexShrink: 0,
               boxShadow: step === p.id ? '0 2px 4px rgba(22,101,52,0.2)' : 'none'
             }}
           >
@@ -68,16 +67,17 @@ export default function VisitWizard({ visit, onBack }) {
       </div>
 
       {/* CONTENIDO DE LOS PASOS */}
+      {/* Nota: Asegúrate de tener definidos StepGeneral, StepDatosVivienda, etc. */}
       <div style={{ display: step === 1 ? 'block' : 'none' }}>
-        <StepGeneral visit={visit} onNext={nextStep} />
+        {/* <StepGeneral visit={visit} onNext={nextStep} /> */}
       </div>
 
       <div style={{ display: step === 2 ? 'block' : 'none' }}>
-        <StepDatosVivienda visit={visit} onNext={nextStep} onBack={prevStep} />
+        {/* <StepDatosVivienda visit={visit} onNext={nextStep} onBack={prevStep} /> */}
       </div>
 
       <div style={{ display: step === 3 ? 'block' : 'none' }}>
-        <StepEnvelope visit={visit} onNext={nextStep} onBack={prevStep} />
+        {/* <StepEnvelope visit={visit} onNext={nextStep} onBack={prevStep} /> */}
       </div>
 
       <div style={{ display: step === 4 ? 'block' : 'none' }}>
@@ -92,7 +92,7 @@ export default function VisitWizard({ visit, onBack }) {
         <StepPhotos visit={visit} onBack={prevStep} />
       </div>
 
-      {/* BOTÓN GLOBAL DE SALIDA (Más discreto) */}
+      {/* BOTÓN GLOBAL DE SALIDA */}
       <div style={{ marginTop: '30px', borderTop: '1px solid #eee', paddingTop: '15px' }}>
         <button 
           onClick={onBack} 
@@ -103,7 +103,6 @@ export default function VisitWizard({ visit, onBack }) {
             border: '1px solid #ddd', 
             borderRadius: '6px', 
             fontSize: '13px',
-            width: 'auto', // Que no ocupe todo el ancho para que no sea tosco
             display: 'block',
             margin: '0 auto'
           }}
@@ -111,7 +110,6 @@ export default function VisitWizard({ visit, onBack }) {
           ✕ Guardar y salir
         </button>
       </div>
-
     </div>
   );
 }
@@ -622,177 +620,91 @@ function StepWindows({ visit, onNext, onBack }) {
 
   const [windows, setWindows] = useState([]);
   const [nuevo, setNuevo] = useState({
-    tipo: '',
-    marco: '',
-    vidrio: '',
-    ancho: '',
-    alto: '',
-    orientacion: '',
-    proteccion_solar: '',
-    retranqueo: '',
-    voladizo: ''
+    tipo: '', marco: '', vidrio: '', ancho: '', alto: '', orientacion: '', 
+    proteccion_solar: '', retranqueo: '', voladizo: '' 
   });
   
   const [fotos, setFotos] = useState([]);
   const fileInputRef = useRef(null);
 
-  // Cargar ventanas al inicio
   useEffect(() => {
     fetch(`${API_URL}/api/visits/${visit.id}/windows`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     .then(res => res.json())
-    .then(data => {
-      if (Array.isArray(data)) setWindows(data);
-    })
-    .catch(err => console.error("Error cargando ventanas:", err));
-  }, [visit.id, API_URL, token]);
+    .then(data => { if (Array.isArray(data)) setWindows(data); });
+  }, [visit.id]);
 
-  const handleChange = (e) => {
-    setNuevo({ ...nuevo, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setNuevo({ ...nuevo, [e.target.name]: e.target.value });
 
-  const handleFileChange = (e) => {
-    setFotos(e.target.files);
-  };
-
-  // Función para añadir ventana nueva (con fotos)
   const añadirVentana = async () => {
-    if (!nuevo.tipo || !nuevo.ancho || !nuevo.alto || !nuevo.orientacion || !nuevo.proteccion_solar) {
-      alert("Completa todos los campos, incluyendo la protección solar (CE3X)");
-      return;
-    }
-
-    const superficieCalculada = Number(nuevo.ancho) * Number(nuevo.alto);
+    if (!nuevo.tipo || !nuevo.proteccion_solar) return alert("Completa tipo y protección");
+    
     const formData = new FormData();
-    formData.append('nombre', nuevo.tipo);
-    formData.append('marco', nuevo.marco);
-    formData.append('vidrio', nuevo.vidrio);
-    formData.append('superficie', superficieCalculada);
-    formData.append('orientacion', nuevo.orientacion);
-    formData.append('proteccion_solar', nuevo.proteccion_solar);
+    Object.keys(nuevo).forEach(key => formData.append(key, nuevo[key]));
+    formData.append('superficie', Number(nuevo.ancho) * Number(nuevo.alto));
     formData.append('largo', nuevo.ancho);
-    formData.append('alto', nuevo.alto);
-    formData.append('retranqueo', nuevo.retranqueo || 0);
-    formData.append('voladizo', nuevo.voladizo || 0);
+    Array.from(fotos).forEach(f => formData.append('fotos', f));
 
-    for (let i = 0; i < fotos.length; i++) {
-      formData.append('fotos', fotos[i]);
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/api/visits/${visit.id}/windows`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData
-      });
-
-      if (response.ok) {
-        const guardada = await response.json();
-        setWindows([...windows, guardada]);
-        setNuevo({ tipo: '', marco: '', vidrio: '', ancho: '', alto: '', orientacion: '', proteccion_solar: '', retranqueo: '', voladizo: '' });
-        setFotos([]);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      }
-    } catch (error) {
-      console.error("Error:", error);
+    const res = await fetch(`${API_URL}/api/visits/${visit.id}/windows`, {
+      method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      setWindows([...windows, data]);
+      setNuevo({ tipo: '', marco: '', vidrio: '', ancho: '', alto: '', orientacion: '', proteccion_solar: '', retranqueo: '', voladizo: '' });
+      setFotos([]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  // 🚀 FUNCIÓN PARA DUPLICAR (Solo el botón +)
   const duplicarVentana = async (v) => {
-    const datosCopia = {
-      nombre: v.nombre,
-      marco: v.marco,
-      vidrio: v.vidrio,
-      superficie: v.superficie,
-      orientacion: v.orientacion,
-      proteccion_solar: v.proteccion_solar,
-      largo: v.largo,
-      alto: v.alto,
-      retranqueo: v.retranqueo || 0,
-      voladizo: v.voladizo || 0
-    };
-
-    try {
-      const response = await fetch(`${API_URL}/api/visits/${visit.id}/windows`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify(datosCopia)
-      });
-
-      if (response.ok) {
-        const guardada = await response.json();
-        setWindows([...windows, guardada]);
-      }
-    } catch (error) {
-      console.error("Error duplicando:", error);
+    const res = await fetch(`${API_URL}/api/visits/${visit.id}/windows`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ ...v, id: undefined })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setWindows([...windows, data]);
     }
   };
 
   const eliminarVentana = async (id) => {
-    if (!window.confirm("¿Eliminar ventana?")) return;
+    if (!window.confirm("¿Borrar ventana?")) return;
     const res = await fetch(`${API_URL}/api/visits/${visit.id}/windows/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` }
+      method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
     });
     if (res.ok) setWindows(windows.filter(w => w.id !== id));
   };
 
   return (
     <div>
-      <h3 style={{ color: '#166534' }}>Paso 4: Ventanas y Protecciones</h3>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #d1d5db' }}>
-        
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
         <div style={{ display: 'flex', gap: '10px' }}>
-            <select name="tipo" value={nuevo.tipo} onChange={handleChange} style={{ flex: 1, padding: '10px', borderRadius: '8px' }}>
-              <option value="">Tipo de Hueco</option>
-              <option>Ventana</option>
-              <option>Puerta acristalada</option>
-              <option>Ventanal</option>
-            </select>
-
-            <select name="orientacion" value={nuevo.orientacion} onChange={handleChange} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #2196F3' }}>
-              <option value="">Orientación...</option>
-              <option>Norte</option><option>Sur</option><option>Este</option><option>Oeste</option>
-              <option>NO</option><option>NE</option><option>SO</option><option>SE</option>
-            </select>
+          <select name="tipo" value={nuevo.tipo} onChange={handleChange} style={{ flex: 1, padding: '10px' }}>
+            <option value="">Tipo...</option>
+            <option>Ventana</option><option>Puerta acristalada</option>
+          </select>
+          <select name="orientacion" value={nuevo.orientacion} onChange={handleChange} style={{ flex: 1, padding: '10px' }}>
+            <option value="">Orientación...</option>
+            <option>N</option><option>S</option><option>E</option><option>O</option>
+          </select>
         </div>
 
-        <select 
-          name="proteccion_solar" 
-          value={nuevo.proteccion_solar} 
-          onChange={handleChange} 
-          style={{ padding: '10px', border: '2px solid #c0392b', borderRadius: '8px', fontWeight: 'bold' }}
-        >
-          <option value="">Seleccionar Protección Solar (CE3X)</option>
+        <select name="proteccion_solar" value={nuevo.proteccion_solar} onChange={handleChange} style={{ padding: '10px', border: '2px solid #c0392b', borderRadius: '8px' }}>
+          <option value="">Protección Solar (CE3X)...</option>
           <option value="Sin protección">Sin protección</option>
-          <option value="Retranqueo">Retranqueo (Sombras)</option>
-          <option value="Voladizo">Voladizo (Alero)</option>
-          <option value="Retranqueo y Voladizo">Ambos (Retranqueo + Voladizo)</option>
+          <option value="Retranqueo">Retranqueo</option>
+          <option value="Voladizo">Voladizo</option>
           <option value="Persiana">Persiana</option>
-          <option value="Toldo">Toldo</option>
         </select>
 
-        {/* LÓGICA CONDICIONAL DE METROS */}
         {(nuevo.proteccion_solar.includes('Retranqueo') || nuevo.proteccion_solar.includes('Voladizo')) && (
-          <div style={{ display: 'flex', gap: '10px', background: '#fffbe6', padding: '12px', borderRadius: '8px', border: '1px solid #ffe58f' }}>
-            {nuevo.proteccion_solar.includes('Retranqueo') && (
-              <div style={{ flex: 1 }}>
-                <label style={{ fontSize: '11px', color: '#856404', fontWeight: 'bold' }}>Retranqueo (m)</label>
-                <input type="number" name="retranqueo" placeholder="0.15" value={nuevo.retranqueo} onChange={handleChange} style={{ width: '100%', padding: '8px', border: '1px solid #ffe58f' }} />
-              </div>
-            )}
-            {nuevo.proteccion_solar.includes('Voladizo') && (
-              <div style={{ flex: 1 }}>
-                <label style={{ fontSize: '11px', color: '#856404', fontWeight: 'bold' }}>Voladizo (m)</label>
-                <input type="number" name="voladizo" placeholder="0.50" value={nuevo.voladizo} onChange={handleChange} style={{ width: '100%', padding: '8px', border: '1px solid #ffe58f' }} />
-              </div>
-            )}
+          <div style={{ display: 'flex', gap: '10px', background: '#fffbe6', padding: '10px', borderRadius: '8px', border: '1px solid #ffe58f' }}>
+            {nuevo.proteccion_solar.includes('Retranqueo') && <input type="number" name="retranqueo" placeholder="m Retranqueo" value={nuevo.retranqueo} onChange={handleChange} style={{ flex: 1, padding: '8px' }} />}
+            {nuevo.proteccion_solar.includes('Voladizo') && <input type="number" name="voladizo" placeholder="m Voladizo" value={nuevo.voladizo} onChange={handleChange} style={{ flex: 1, padding: '8px' }} />}
           </div>
         )}
 
@@ -801,30 +713,28 @@ function StepWindows({ visit, onNext, onBack }) {
           <input type="number" name="alto" placeholder="Alto (m)" value={nuevo.alto} onChange={handleChange} style={{ flex: 1, padding: '10px' }} />
         </div>
 
-        <button onClick={añadirVentana} style={{ background: '#166534', color: 'white', padding: '14px', borderRadius: '10px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>
-          + Guardar Ventana y Protección
-        </button>
+        <button onClick={añadirVentana} style={{ background: '#166534', color: 'white', padding: '12px', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>+ Guardar Ventana</button>
       </div>
 
-      {/* LISTADO CON BOTÓN DE DUPLICAR (+) */}
-      <div style={{ marginTop: '25px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      {/* LISTADO CON BOTÓN DUPLICAR (+) */}
+      <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {windows.map((w) => (
-          <div key={w.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: 'white', borderRadius: '10px', border: '1px solid #e5e7eb' }}>
+          <div key={w.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', background: '#fff', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{w.nombre} - {w.orientacion}</div>
-              <div style={{ fontSize: '12px', color: '#6b7280' }}>{w.largo}x{w.alto}m | {w.proteccion_solar}</div>
+              <div style={{ fontSize: '12px', color: '#64748b' }}>{w.largo}x{w.alto}m | {w.proteccion_solar}</div>
             </div>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <button onClick={() => duplicarVentana(w)} style={{ width: '30px', height: '30px', borderRadius: '50%', border: '1px solid #166534', background: '#ecfdf5', color: '#166534', fontSize: '20px', cursor: 'pointer', paddingBottom: '2px' }}>+</button>
-              <button onClick={() => eliminarVentana(w.id)} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '20px', cursor: 'pointer' }}>×</button>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <button onClick={() => duplicarVentana(w)} style={{ width: '30px', height: '30px', borderRadius: '50%', border: '1px solid #166534', background: '#ecfdf5', color: '#166534', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, cursor: 'pointer' }}>+</button>
+              <button onClick={() => eliminarVentana(w.id)} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '22px', padding: 0, cursor: 'pointer' }}>×</button>
             </div>
           </div>
         ))}
       </div>
 
-      <div style={{ marginTop: 30, display: 'flex', justifyContent: 'space-between' }}>
-        <button onClick={onBack} style={{ padding: '10px 20px', borderRadius: '8px' }}>← Volver</button>
-        <button onClick={onNext} style={{ padding: '10px 20px', background: '#007bff', color: 'white', border: 'none', borderRadius: '8px' }}>Siguiente →</button>
+      <div style={{ marginTop: 30, display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
+        <button onClick={onBack} style={{ flex: 1, padding: '12px', borderRadius: '8px', background: '#eee', border: 'none' }}>Atrás</button>
+        <button onClick={onNext} style={{ flex: 2, padding: '12px', borderRadius: '8px', background: '#007bff', color: 'white', border: 'none' }}>Siguiente</button>
       </div>
     </div>
   );
