@@ -69,15 +69,15 @@ export default function VisitWizard({ visit, onBack }) {
       {/* CONTENIDO DE LOS PASOS */}
       {/* Nota: Asegúrate de tener definidos StepGeneral, StepDatosVivienda, etc. */}
       <div style={{ display: step === 1 ? 'block' : 'none' }}>
-        {/* <StepGeneral visit={visit} onNext={nextStep} /> */}
+       
       </div>
 
       <div style={{ display: step === 2 ? 'block' : 'none' }}>
-        {/* <StepDatosVivienda visit={visit} onNext={nextStep} onBack={prevStep} /> */}
+       
       </div>
 
       <div style={{ display: step === 3 ? 'block' : 'none' }}>
-        {/* <StepEnvelope visit={visit} onNext={nextStep} onBack={prevStep} /> */}
+      
       </div>
 
       <div style={{ display: step === 4 ? 'block' : 'none' }}>
