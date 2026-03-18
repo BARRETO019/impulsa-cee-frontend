@@ -529,7 +529,7 @@ function StepEnvelope({ visit, onNext, onBack }) {
           <select name="orientacion" value={nuevo.orientacion} onChange={handleChange} style={{ flex: 1, padding: '8px' }}>
             <option value="">Orientación</option>
             <option>Norte</option><option>Sur</option><option>Este</option><option>Oeste</option>
-            <option>Horizontal</option>
+            <option>NO</option><option>NE</option><option>SO</option><option>SE</option><option>lATERL IZQ</option><option>lATERL Drecho</option>
           </select>
         </div>
 
@@ -702,8 +702,15 @@ function StepWindows({ visit, onNext, onBack }) {
             <option value="Sur">Sur</option>
             <option value="Este">Este</option>
             <option value="Oeste">Oeste</option>
+            <option value="Oeste">NO</option>
+            <option value="Oeste">NE</option>
+            <option value="Oeste">SO</option>
+            <option value="Oeste">SE</option>
             <option value="Principal">Principal (Fachada)</option>
-            <option value="Trasera">Trasera (Patio)</option>
+            <option value="Trasera">Trasera</option>
+            <option value="Trasera">Lateral DRCH</option>
+            <option value="Trasera">Lateral IZQ</option>
+
             </select>
         </div>
 
@@ -711,13 +718,12 @@ function StepWindows({ visit, onNext, onBack }) {
         <select name="proteccion_solar" value={nuevo.proteccion_solar} onChange={handleChange} style={{ padding: '8px', border: '2px solid #c0392b', borderRadius: '4px' }}>
           <option value="">Seleccionar Protección Solar (CE3X)</option>
           <option value="Sin protección">Sin protección</option>
-          <option value="Persiana de PVC">Persiana de PVC</option>
+          <option value="Persiana de PVC">Retanqueo</option>
+           <option value="Persiana de PVC">Voladizo</option>
           <option value="Persiana de Aluminio">Persiana de Aluminio</option>
-          <option value="Toldo de color claro">Toldo de color claro</option>
-          <option value="Toldo de color oscuro">Toldo de color oscuro</option>
+          <option value="Toldo de color oscuro">Toldo</option>
           <option value="Lamas horizontales">Lamas horizontales</option>
           <option value="Lamas verticales">Lamas verticales</option>
-          <option value="Cortina / Estor">Cortina / Estor</option>
         </select>
 
         {/* Marco y Vidrio */}
