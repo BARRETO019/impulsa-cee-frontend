@@ -420,7 +420,6 @@ function StepEnvelope({ visit, onNext, onBack }) {
     observaciones: ''
   });
 
-  // EFECTO: Carga los elementos que ya están en la DB al entrar
   useEffect(() => {
     fetch(`${API_URL}/api/visits/${visit.id}/envelope`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -430,7 +429,7 @@ function StepEnvelope({ visit, onNext, onBack }) {
       if (Array.isArray(data)) setElementos(data);
     })
     .catch(err => console.error("Error cargando envolvente:", err));
-  }, [visit.id]);
+  }, [visit.id, API_URL, token]);
 
   const handleChange = (e) => {
     setNuevo({ ...nuevo, [e.target.name]: e.target.value });
@@ -446,131 +445,140 @@ function StepEnvelope({ visit, onNext, onBack }) {
     const an = Number(nuevo.ancho) || 0;
     const al = Number(nuevo.alto) || 0;
 
+    // Lógica de cálculo de superficie (CE3X suele usar Largo x Alto para muros)
     let superficieCalculada = 0;
-
-    if (l > 0 && an > 0) superficieCalculada = l * an;         
-    else if (l > 0 && al > 0) superficieCalculada = l * al;    
-    else if (an > 0 && al > 0) superficieCalculada = an * al;  
+    if (l > 0 && al > 0) superficieCalculada = l * al;    
+    else if (l > 0 && an > 0) superficieCalculada = l * an; 
+    else if (an > 0 && al > 0) superficieCalculada = an * al;
 
     if (superficieCalculada === 0) {
-      alert("Por favor, rellena al menos dos medidas (Largo, Ancho o Alto) para calcular los m².");
+      alert("Introduce al menos dos medidas para calcular la superficie.");
       return;
     }
 
-   const response = await fetch(`${API_URL}/api/visits/${visit.id}/envelope`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        tipo: nuevo.tipo,
-        orientacion: nuevo.orientacion,
-        superficie: superficieCalculada,
-        nombre: nuevo.tipo,
-        observaciones: nuevo.observaciones,
-        // datosssss 
-        largo: l,
-        ancho: an,
-        alto: al
-      })
-    });
+    try {
+      const response = await fetch(`${API_URL}/api/visits/${visit.id}/envelope`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          tipo: nuevo.tipo,
+          orientacion: nuevo.orientacion || 'N/A',
+          superficie: superficieCalculada,
+          nombre: nuevo.tipo,
+          observaciones: nuevo.observaciones,
+          // Enviamos las dimensiones por separado para el PDF
+          largo: l,
+          ancho: an,
+          alto: al
+        })
+      });
 
-    if (response.ok) {
-      const guardado = await response.json();
-      setElementos([...elementos, guardado]);
-      setNuevo({ tipo: '', orientacion: '', largo: '', ancho: '', alto: '', observaciones: '' });
-    } else {
-      alert("Error guardando elemento");
+      if (response.ok) {
+        const guardado = await response.json();
+        setElementos([...elementos, guardado]);
+        setNuevo({ tipo: '', orientacion: '', largo: '', ancho: '', alto: '', observaciones: '' });
+      } else {
+        alert("Error guardando elemento");
+      }
+    } catch (error) {
+      console.error("Error en la petición:", error);
     }
   };
 
-  // BORRAR ELEMENTO DE LA BASE DE DATOS Y LA TABLA
   const eliminarElemento = async (idElemento) => {
-    // Pequeño aviso para no borrar por error
     if (!window.confirm("¿Seguro que quieres borrar este elemento?")) return;
-
     try {
-      //petición DELETE al backend
       const response = await fetch(`${API_URL}/api/visits/${visit.id}/envelope/${idElemento}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
-
       if (response.ok) {
-        // Filtramos la lista para quitar el elemento borrado visualmente sin recargar la página
         setElementos(elementos.filter(el => el.id !== idElemento));
-      } else {
-        alert("Error al intentar borrar el elemento en el servidor.");
       }
     } catch (error) {
       console.error("Error borrando:", error);
-      alert("Error de conexión al intentar borrar.");
     }
   };
 
   return (
     <div>
-      <h3>Step 3: Envolvente térmica</h3>
+      <h3>Step 3: Envolvente Térmica y Particiones</h3>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: '#f9f9f9', padding: '15px', borderRadius: '8px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: '#f9f9f9', padding: '15px', borderRadius: '8px', border: '1px solid #ddd' }}>
         
-        <select name="tipo" value={nuevo.tipo} onChange={handleChange} style={{ padding: '8px' }}>
-          <option value="">Seleccionar Tipo</option>
-          <option value="Muro exterior">Muro exterior</option>
-          <option value="Cubierta">Cubierta</option>
-          <option value="Suelo">Suelo</option>
-          <option value="Medianera">Medianera</option>
-          <option value="Partición horizontal">Partición horizontal</option>
-          <option value="Partición vertical">Partición vertical</option>
-          <option value="Partición vertical y horizontal">Partición vertical y horizontal</option>
-        </select>
-
-        <select name="orientacion" value={nuevo.orientacion} onChange={handleChange} style={{ padding: '8px' }}>
-          <option value="">Seleccionar Orientación</option>
-          <option>Norte</option><option>Sur</option><option>Este</option><option>Oeste</option>
-        </select>
-
         <div style={{ display: 'flex', gap: '10px' }}>
-          <input type="number" name="largo" placeholder="Largo (m)" value={nuevo.largo} onChange={handleChange} style={{ flex: 1, padding: '8px' }} />
-          <input type="number" name="ancho" placeholder="Ancho (m)" value={nuevo.ancho} onChange={handleChange} style={{ flex: 1, padding: '8px' }} />
-          <input type="number" name="alto" placeholder="Alto (m)" value={nuevo.alto} onChange={handleChange} style={{ flex: 1, padding: '8px' }} />
+          <select name="tipo" value={nuevo.tipo} onChange={handleChange} style={{ flex: 1, padding: '8px' }}>
+            <option value="">Seleccionar Tipo</option>
+            <optgroup label="Fachadas">
+              <option value="Muro exterior">Muro exterior</option>
+              <option value="Medianera">Medianera</option>
+            </optgroup>
+            <optgroup label="Particiones Interiores">
+              <option value="Partición horizontal">Partición horizontal</option>
+              <option value="Partición vertical">Partición vertical</option>
+            </optgroup>
+            <optgroup label="Otros">
+              <option value="Cubierta">Cubierta</option>
+              <option value="Suelo">Suelo</option>
+            </optgroup>
+          </select>
+
+          <select name="orientacion" value={nuevo.orientacion} onChange={handleChange} style={{ flex: 1, padding: '8px' }}>
+            <option value="">Orientación</option>
+            <option>Norte</option><option>Sur</option><option>Este</option><option>Oeste</option>
+            <option>Horizontal</option>
+          </select>
         </div>
 
-        <input name="observaciones" placeholder="Observaciones (ej: Doble tabique)" value={nuevo.observaciones} onChange={handleChange} style={{ padding: '8px' }} />
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: '12px', color: '#666' }}>Largo (m)</label>
+            <input type="number" name="largo" placeholder="0.00" value={nuevo.largo} onChange={handleChange} style={{ width: '100%', padding: '8px' }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: '12px', color: '#666' }}>Ancho/Espesor (m)</label>
+            <input type="number" name="ancho" placeholder="0.00" value={nuevo.ancho} onChange={handleChange} style={{ width: '100%', padding: '8px' }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: '12px', color: '#666' }}>Alto (m)</label>
+            <input type="number" name="alto" placeholder="0.00" value={nuevo.alto} onChange={handleChange} style={{ width: '100%', padding: '8px' }} />
+          </div>
+        </div>
 
-        <button onClick={añadirElemento} style={{ background: '#4CAF50', color: 'white', padding: '10px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-          + Añadir a la lista
+        <input name="observaciones" placeholder="Observaciones técnicas (ej: Aislamiento proyectado)" value={nuevo.observaciones} onChange={handleChange} style={{ padding: '8px' }} />
+
+        <button onClick={añadirElemento} style={{ background: '#4CAF50', color: 'white', padding: '12px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+          + Añadir Elemento
         </button>
       </div>
 
       <div style={{ marginTop: 20 }}>
-        <h4>Elementos en esta visita:</h4>
-        {elementos.length === 0 ? <p>No hay elementos aún.</p> : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+        <h4>Resumen de elementos:</h4>
+        {elementos.length === 0 ? <p>No hay elementos registrados.</p> : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
-              <tr style={{ background: '#ddd' }}>
-                <th style={{ border: '1px solid #ccc', padding: '8px' }}>Tipo</th>
-                <th style={{ border: '1px solid #ccc', padding: '8px' }}>Orient.</th>
+              <tr style={{ background: '#eee' }}>
+                <th style={{ border: '1px solid #ccc', padding: '8px' }}>Tipo/Orientación</th>
+                <th style={{ border: '1px solid #ccc', padding: '8px' }}>Dimensiones</th>
                 <th style={{ border: '1px solid #ccc', padding: '8px' }}>m²</th>
-                <th style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'center' }}>Acción</th>
+                <th style={{ border: '1px solid #ccc', padding: '8px' }}>Borrar</th>
               </tr>
             </thead>
             <tbody>
-              {elementos.map((el, i) => (
-                // Es importante usar el id de la base de datos (el.id) para borrar correctamente
-                <tr key={el.id || i}>
-                  <td style={{ border: '1px solid #ccc', padding: '8px' }}>{el.tipo}</td>
-                  <td style={{ border: '1px solid #ccc', padding: '8px' }}>{el.orientacion}</td>
+              {elementos.map((el) => (
+                <tr key={el.id}>
+                  <td style={{ border: '1px solid #ccc', padding: '8px' }}>
+                    <strong>{el.tipo}</strong><br/>{el.orientacion}
+                  </td>
+                  <td style={{ border: '1px solid #ccc', padding: '8px' }}>
+                    {el.largo} x {el.alto || el.ancho}
+                  </td>
                   <td style={{ border: '1px solid #ccc', padding: '8px' }}>{el.superficie} m²</td>
                   <td style={{ border: '1px solid #ccc', padding: '8px', textAlign: 'center' }}>
-                    {/* BOTÓN DE BORRAR */}
-                    <button 
-                      onClick={() => eliminarElemento(el.id)}
-                      style={{ background: '#ff4d4d', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
-                    >
-                      🗑️ Borrar
-                    </button>
+                    <button onClick={() => eliminarElemento(el.id)} style={{ border: 'none', background: 'none', cursor: 'pointer' }}>🗑️</button>
                   </td>
                 </tr>
               ))}
@@ -602,7 +610,8 @@ function StepWindows({ visit, onNext, onBack }) {
     vidrio: '',
     ancho: '',
     alto: '',
-    orientacion: '' // 🆕
+    orientacion: '',
+    proteccion_solar: '' // 🆕 Campo para CE3X
   });
   
   const [fotos, setFotos] = useState([]);
@@ -628,8 +637,9 @@ function StepWindows({ visit, onNext, onBack }) {
   };
 
   const añadirVentana = async () => {
-    if (!nuevo.tipo || !nuevo.ancho || !nuevo.alto || !nuevo.orientacion) {
-      alert("Completa tipo, ancho, alto y orientación");
+    // Validación: Ahora incluimos protección solar
+    if (!nuevo.tipo || !nuevo.ancho || !nuevo.alto || !nuevo.orientacion || !nuevo.proteccion_solar) {
+      alert("Completa todos los campos, incluyendo la protección solar (CE3X)");
       return;
     }
 
@@ -639,7 +649,10 @@ function StepWindows({ visit, onNext, onBack }) {
     formData.append('marco', nuevo.marco);
     formData.append('vidrio', nuevo.vidrio);
     formData.append('superficie', superficieCalculada);
-    formData.append('orientacion', nuevo.orientacion); // 🆕
+    formData.append('orientacion', nuevo.orientacion);
+    formData.append('proteccion_solar', nuevo.proteccion_solar); // 🆕 Enviamos a CE3X
+    formData.append('largo', nuevo.ancho); // 🆕 Enviamos ancho como largo para la DB
+    formData.append('alto', nuevo.alto);   // 🆕 Enviamos alto para la DB
 
     for (let i = 0; i < fotos.length; i++) {
       formData.append('fotos', fotos[i]);
@@ -655,7 +668,8 @@ function StepWindows({ visit, onNext, onBack }) {
       if (response.ok) {
         const guardada = await response.json();
         setWindows([...windows, guardada]);
-        setNuevo({ tipo: '', marco: '', vidrio: '', ancho: '', alto: '', orientacion: '' });
+        // Reset completo
+        setNuevo({ tipo: '', marco: '', vidrio: '', ancho: '', alto: '', orientacion: '', proteccion_solar: '' });
         setFotos([]);
         if (fileInputRef.current) fileInputRef.current.value = "";
       } else {
@@ -669,47 +683,71 @@ function StepWindows({ visit, onNext, onBack }) {
 
   return (
     <div>
-      <h3>Step 4: Huecos (Ventanas)</h3>
+      <h3>Step 4: Huecos (Ventanas y Protecciones)</h3>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: '#f0f4f8', padding: '15px', borderRadius: '8px' }}>
-        <select name="tipo" value={nuevo.tipo} onChange={handleChange} style={{ padding: '8px' }}>
-          <option value="">Seleccionar Tipo</option>
-          <option>Ventana</option>
-          <option>Puerta acristalada</option>
-          <option>Ventanal</option>
+        
+        {/* Tipo y Orientación */}
+        <div style={{ display: 'flex', gap: '10px' }}>
+            <select name="tipo" value={nuevo.tipo} onChange={handleChange} style={{ flex: 1, padding: '8px' }}>
+            <option value="">Tipo de Hueco</option>
+            <option>Ventana</option>
+            <option>Puerta acristalada</option>
+            <option>Ventanal</option>
+            </select>
+
+            <select name="orientacion" value={nuevo.orientacion} onChange={handleChange} style={{ flex: 1, padding: '8px', border: '1px solid #2196F3' }}>
+            <option value="">Orientación...</option>
+            <option value="Norte">Norte</option>
+            <option value="Sur">Sur</option>
+            <option value="Este">Este</option>
+            <option value="Oeste">Oeste</option>
+            <option value="Principal">Principal (Fachada)</option>
+            <option value="Trasera">Trasera (Patio)</option>
+            </select>
+        </div>
+
+        {/* Protección Solar CE3X */}
+        <select name="proteccion_solar" value={nuevo.proteccion_solar} onChange={handleChange} style={{ padding: '8px', border: '2px solid #c0392b', borderRadius: '4px' }}>
+          <option value="">Seleccionar Protección Solar (CE3X)</option>
+          <option value="Sin protección">Sin protección</option>
+          <option value="Persiana de PVC">Persiana de PVC</option>
+          <option value="Persiana de Aluminio">Persiana de Aluminio</option>
+          <option value="Toldo de color claro">Toldo de color claro</option>
+          <option value="Toldo de color oscuro">Toldo de color oscuro</option>
+          <option value="Lamas horizontales">Lamas horizontales</option>
+          <option value="Lamas verticales">Lamas verticales</option>
+          <option value="Cortina / Estor">Cortina / Estor</option>
         </select>
 
-        <select name="orientacion" value={nuevo.orientacion} onChange={handleChange} style={{ padding: '8px', border: '2px solid #2196F3' }}>
-          <option value="">Seleccionar Orientación...</option>
-          <option value="Principal">Principal (Fachada)</option>
-          <option value="Trasera">Trasera (Patio)</option>
-          <option value="Lateral Derecho">Lateral Derecho</option>
-          <option value="Lateral Izquierdo">Lateral Izquierdo</option>
-        </select>
+        {/* Marco y Vidrio */}
+        <div style={{ display: 'flex', gap: '10px' }}>
+            <select name="marco" value={nuevo.marco} onChange={handleChange} style={{ flex: 1, padding: '8px' }}>
+            <option value="">Marco</option>
+            <option>Aluminio</option>
+            <option>PVC</option>
+            <option>Madera</option>
+            <option>Aluminio RPT</option>
+            </select>
 
-        <select name="marco" value={nuevo.marco} onChange={handleChange} style={{ padding: '8px' }}>
-          <option value="">Seleccionar Marco</option>
-          <option>Aluminio</option>
-          <option>PVC</option>
-          <option>Madera</option>
-          <option>Aluminio RPT</option>
-        </select>
+            <select name="vidrio" value={nuevo.vidrio} onChange={handleChange} style={{ flex: 1, padding: '8px' }}>
+            <option value="">Vidrio</option>
+            <option>Simple</option>
+            <option>Doble</option>
+            <option>Triple</option>
+            </select>
+        </div>
 
-        <select name="vidrio" value={nuevo.vidrio} onChange={handleChange} style={{ padding: '8px' }}>
-          <option value="">Seleccionar Vidrio</option>
-          <option>Simple</option>
-          <option>Doble</option>
-          <option>Triple</option>
-        </select>
-
+        {/* Dimensiones */}
         <div style={{ display: 'flex', gap: '10px' }}>
           <input type="number" name="ancho" placeholder="Ancho (m)" value={nuevo.ancho} onChange={handleChange} style={{ flex: 1, padding: '8px' }} />
           <input type="number" name="alto" placeholder="Alto (m)" value={nuevo.alto} onChange={handleChange} style={{ flex: 1, padding: '8px' }} />
         </div>
 
+        {/* Fotos */}
         <div>
           <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#555' }}>
-            Fotos de este hueco/ventana (opcional):
+            Fotos del hueco/placa/protección:
           </label>
           <input 
             type="file" 
@@ -721,11 +759,12 @@ function StepWindows({ visit, onNext, onBack }) {
           />
         </div>
 
-        <button onClick={añadirVentana} style={{ background: '#2196F3', color: 'white', padding: '10px', border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '5px' }}>
-          + Añadir Ventana
+        <button onClick={añadirVentana} style={{ background: '#2196F3', color: 'white', padding: '12px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+          + Guardar Ventana y Protección
         </button>
       </div>
 
+      {/* Tabla de registros corregida */}
       <div style={{ marginTop: 20 }}>
         <h4>Ventanas registradas:</h4>
         {windows.length === 0 ? <p>No hay ventanas añadidas.</p> : (
@@ -733,7 +772,7 @@ function StepWindows({ visit, onNext, onBack }) {
             <thead>
               <tr style={{ background: '#eee' }}>
                 <th style={{ border: '1px solid #ccc', padding: '8px' }}>Tipo/Orientación</th>
-                <th style={{ border: '1px solid #ccc', padding: '8px' }}>Marco/Vidrio</th>
+                <th style={{ border: '1px solid #ccc', padding: '8px' }}>Protección CE3X</th>
                 <th style={{ border: '1px solid #ccc', padding: '8px' }}>m²</th>
               </tr>
             </thead>
@@ -741,11 +780,16 @@ function StepWindows({ visit, onNext, onBack }) {
               {windows.map((w, i) => (
                 <tr key={i}>
                   <td style={{ border: '1px solid #ccc', padding: '8px' }}>
-                    <strong>{w.nombre || w.tipo}</strong><br/>
-                    <small style={{ color: '#666' }}>{w.orientacion_tecnica || w.orientacion}</small>
+                    <strong>{w.nombre}</strong><br/>
+                    <small>{w.orientacion}</small>
                   </td>
-                  <td style={{ border: '1px solid #ccc', padding: '8px' }}>{w.marco} / {w.vidrio}</td>
-                  <td style={{ border: '1px solid #ccc', padding: '8px' }}>{w.superficie} m²</td>
+                  <td style={{ border: '1px solid #ccc', padding: '8px', color: '#c0392b' }}>
+                    {w.proteccion_solar || 'N/A'}
+                  </td>
+                  <td style={{ border: '1px solid #ccc', padding: '8px' }}>
+                    {w.superficie} m² <br/>
+                    <small>({w.largo}x{w.alto})</small>
+                  </td>
                 </tr>
               ))}
             </tbody>
