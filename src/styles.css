@@ -217,3 +217,15 @@ input[type="file"]::-webkit-file-upload-button {
   -webkit-appearance: auto !important;
   cursor: pointer;
 }
+@media (max-width: 600px) {
+  h3 {
+    font-size: 1.2rem;
+  }
+  table {
+    display: block;
+    overflow-x: auto; /* Para que las tablas no rompan el diseño */
+  }
+  button {
+    width: 100% !important; /* Los botones siempre a ancho completo en móvil */
+  }
+}
