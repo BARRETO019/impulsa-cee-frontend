@@ -24,22 +24,26 @@ export default function VisitWizard({ visit, onBack }) {
   return (
     <div className="card" style={{ padding: '15px' }}>
       
-      {/* Título más integrado */}
-      <h2 style={{ fontSize: '1.2rem', marginBottom: '15px', color: '#166534', borderLeft: '4px solid #166534', paddingLeft: '10px' }}>
-        Visita: <span style={{ fontWeight: 'normal', color: '#444' }}>{visit.direccion}</span>
+      <h2 style={{
+        fontSize: '1.2rem',
+        marginBottom: '15px',
+        color: '#166534',
+        borderLeft: '4px solid #166534',
+        paddingLeft: '10px'
+      }}>
+        Visita: <span style={{ fontWeight: 'normal', color: '#444' }}>
+          {visit.direccion}
+        </span>
       </h2>
 
-      {/* MENÚ DE NAVEGACIÓN (STEPPER PROFESIONAL) */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '8px', 
-        overflowX: 'auto', 
-        marginBottom: '20px', 
-        paddingBottom: '10px', 
-        borderBottom: '1px solid #eee',
-        scrollbarWidth: 'none',
-        msOverflowStyle: 'none',
-        WebkitOverflowScrolling: 'touch'
+      {/* MENÚ */}
+      <div style={{
+        display: 'flex',
+        gap: '8px',
+        overflowX: 'auto',
+        marginBottom: '20px',
+        paddingBottom: '10px',
+        borderBottom: '1px solid #eee'
       }}>
         {pestañas.map((p) => (
           <button
@@ -52,13 +56,7 @@ export default function VisitWizard({ visit, onBack }) {
               borderColor: step === p.id ? '#166534' : '#e5e7eb',
               background: step === p.id ? '#166534' : '#fff',
               color: step === p.id ? '#fff' : '#666',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: '600',
-              whiteSpace: 'nowrap',
-              transition: 'all 0.2s ease',
-              flexShrink: 0,
-              boxShadow: step === p.id ? '0 2px 4px rgba(22,101,52,0.2)' : 'none'
+              cursor: 'pointer'
             }}
           >
             {p.id}. {p.nombre}
@@ -66,18 +64,18 @@ export default function VisitWizard({ visit, onBack }) {
         ))}
       </div>
 
-      {/* CONTENIDO DE LOS PASOS */}
-      {/* Nota: Asegúrate de tener definidos StepGeneral, StepDatosVivienda, etc. */}
+      {/* STEPS */}
+
       <div style={{ display: step === 1 ? 'block' : 'none' }}>
-       
+        <StepGeneral visit={visit} onNext={nextStep} />
       </div>
 
       <div style={{ display: step === 2 ? 'block' : 'none' }}>
-       
+        <StepDatosVivienda visit={visit} onNext={nextStep} onBack={prevStep} />
       </div>
 
       <div style={{ display: step === 3 ? 'block' : 'none' }}>
-      
+        <StepEnvelope visit={visit} onNext={nextStep} onBack={prevStep} />
       </div>
 
       <div style={{ display: step === 4 ? 'block' : 'none' }}>
@@ -92,27 +90,17 @@ export default function VisitWizard({ visit, onBack }) {
         <StepPhotos visit={visit} onBack={prevStep} />
       </div>
 
-      {/* BOTÓN GLOBAL DE SALIDA */}
+      {/* SALIR */}
       <div style={{ marginTop: '30px', borderTop: '1px solid #eee', paddingTop: '15px' }}>
-        <button 
-          onClick={onBack} 
-          style={{ 
-            background: '#f8f9fa', 
-            color: '#666', 
-            padding: '8px 15px', 
-            border: '1px solid #ddd', 
-            borderRadius: '6px', 
-            fontSize: '13px',
-            display: 'block',
-            margin: '0 auto'
-          }}
-        >
+        <button onClick={onBack}>
           ✕ Guardar y salir
         </button>
       </div>
+
     </div>
   );
 }
+
 //////////////////////////////////////////////////////////////////
 // STEP 1 — DATOS GENERALES
 //////////////////////////////////////////////////////////////////
