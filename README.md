@@ -1,57 +1,71 @@
 # ⚡ Impulsa CEE Frontend
 
-Progressive Web Application designed to streamline **energy certification workflows** for field technicians.
+Frontend application for **Impulsa CEE**, a business platform designed to streamline **energy certification workflows** for field technicians.
 
-This app allows technicians to collect, manage and synchronize technical data directly from mobile devices, eliminating manual processes and reducing data loss during on-site visits.
-
----
-
-## 🚀 Current Status
-
-**Version 0.2 (MVP)**
-
-Focused on building a **robust and fault-tolerant data collection system**, ensuring that technicians can reliably capture all required information during field operations.
+This Progressive Web App (PWA) allows technicians to collect, manage and synchronize technical data directly from mobile devices, reducing manual work and preventing data loss during on-site visits.
 
 ---
 
-## 🌟 Key Features
+## 🚀 Overview
 
-- **Multi-step Wizard Navigation**
-  - 6-step form with tab-based navigation
-  - State persistence using React (no data loss when navigating back)
+Impulsa CEE is built to support real-world operational workflows in the energy certification sector.
 
-- **Automatic Calculations**
-  - Real-time calculation of surface areas ($m^2$)
-  - Supports both vertical and horizontal partitions
+The frontend provides:
 
-- **Instant Data Management**
-  - Fast delete actions (🗑️) directly from UI
-  - Immediate sync with backend database
+- a structured interface for technical inspections
+- efficient data entry from the field
+- real-time interaction with backend services
+- a responsive experience across devices
 
-- **Google Drive Integration**
-  - OAuth2 authentication (persistent refresh token)
-  - Automatic folder creation per visit
-  - Image upload for certification records
+---
 
-- **Relational Data Structure**
-  - Organized PostgreSQL schema:
-    - `visit_envelope`
-    - `visit_windows`
-    - `visit_installations`
+## 🎯 Project Purpose
 
-- **Airtable Integration**
-  - Fetches scheduled clients directly from company database
+This application was created to replace fragmented and manual processes with a unified digital system.
+
+Main goals:
+
+- simplify field data collection
+- reduce duplicated work
+- improve data reliability
+- support technicians during real inspections
+- connect seamlessly with backend systems
 
 ---
 
 ## 🛠 Tech Stack
 
-- **Frontend:** React, TailwindCSS
-- **Backend:** Node.js, Express
-- **Database:** PostgreSQL (Neon)
-- **Storage:** Google Drive API v3
-- **Deployment:** Render
-- **Architecture:** Frontend + REST API backend
+- **React**
+- **Vite**
+- **JavaScript**
+- **TailwindCSS**
+- **REST API integration**
+- **PWA (Progressive Web App)**
+
+---
+
+## ✨ Key Features
+
+- **Multi-step Wizard Navigation**
+  - 6-step form flow
+  - persistent state across steps
+  - no data loss when navigating back
+
+- **Automatic Calculations**
+  - real-time surface calculations ($m^2$)
+  - supports vertical and horizontal elements
+
+- **Fast Data Management**
+  - instant deletion from UI (🗑️)
+  - synchronized with backend
+
+- **Responsive Design**
+  - optimized for mobile field usage
+  - usable on desktop for internal workflows
+
+- **Backend Integration**
+  - real-time API communication
+  - structured data persistence
 
 ---
 
@@ -62,33 +76,13 @@ Backend API:
 
 ---
 
-## 🗺️ Roadmap
+## 📁 Project Structure
 
-### ✅ Completed (v0.2)
-- PDF generator (Node.js + pdfkit)
-- Dynamic technical fields
-
-### 🔄 In Progress / Next
-
-- [ ] Full image upload system (facades & equipment)
-- [ ] Offline mode (PWA + Service Workers)
-- [ ] Admin dashboard for internal management
-- [ ] Bulk PDF export
-
----
-
-## 📱 Product Vision
-
-This project focuses on:
-
-- improving field data collection
-- eliminating duplicated manual processes
-- increasing operational efficiency
-- building real-world business tools
-
----
-
-## 👨‍💻 Author
-
-**Emilio Barreto**  
-Full Stack Developer
+```bash
+src/
+├── assets/
+├── components/
+├── pages/
+├── services/
+├── hooks/
+├── utils/
