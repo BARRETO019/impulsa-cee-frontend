@@ -5,6 +5,7 @@ function StepPhotos({ visit, onBack }) {
   const API_URL = import.meta.env.VITE_API_URL;
 
   const [inputs, setInputs] = useState([{ file: null }]);
+  const [loading, setLoading] = useState(false);
 
   const addInput = () => {
     setInputs([...inputs, { file: null }]);
@@ -16,78 +17,118 @@ function StepPhotos({ visit, onBack }) {
     setInputs(newInputs);
   };
 
-  // MODIFICADO: Ahora envía todas las fotos juntas
+  // ✅ NUEVO: subir fotos UNA A UNA
   const uploadPhotos = async () => {
-    const fd = new FormData();
-    let count = 0;
-
     for (const item of inputs) {
-      if (item.file) {
-        fd.append("photo", item.file); // El nombre 'photo' coincide con el backend
-        count++;
+      if (!item.file) continue;
+
+      const fd = new FormData();
+      fd.append("photo", item.file);
+
+      try {
+        const r = await fetch(`${API_URL}/api/visits/${visit.id}/photos`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: fd,
+        });
+
+        if (!r.ok) {
+          console.error("Error en subida:", await r.text());
+          return false;
+        }
+
+      } catch (error) {
+        console.error("Error en fetch:", error);
+        return false;
       }
     }
 
-    if (count === 0) return true; // Si no hay fotos, permitimos finalizar
-
-    try {
-      const r = await fetch(`${API_URL}/api/visits/${visit.id}/photos`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
-      });
-
-      return r.ok;
-    } catch (error) {
-      console.error("Error en la subida:", error);
-      return false;
-    }
+    return true;
   };
 
   const finalizarVisita = async () => {
+    setLoading(true);
+
     const ok = await uploadPhotos();
+
     if (!ok) {
       alert("Error subiendo fotos. Revisa el tamaño de los archivos.");
+      setLoading(false);
       return;
     }
 
-    const response = await fetch(
-      `${API_URL}/api/visits/${visit.id}/finalize`,
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    try {
+      const response = await fetch(
+        `${API_URL}/api/visits/${visit.id}/finalize`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-    if (response.ok) {
-      alert("Visita enviada correctamente 🚀");
-      window.location.reload();
+      if (response.ok) {
+        alert("Visita enviada correctamente 🚀");
+        window.location.reload();
+      } else {
+        alert("Error finalizando la visita");
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert("Error de conexión");
     }
+
+    setLoading(false);
   };
 
   return (
     <div>
       <h3>Fotos de la Visita</h3>
+
       {inputs.map((item, idx) => (
-        <div key={idx} style={{ marginBottom: 15, borderBottom: '1px solid #eee', paddingBottom: 10 }}>
+        <div
+          key={idx}
+          style={{
+            marginBottom: 15,
+            borderBottom: "1px solid #eee",
+            paddingBottom: 10,
+          }}
+        >
           <input type="file" onChange={(e) => handleChange(idx, e)} />
         </div>
       ))}
 
       <button
-        style={{ background: "#6c757d", color: "white", marginBottom: 20, padding: '5px 10px' }}
+        style={{
+          background: "#6c757d",
+          color: "white",
+          marginBottom: 20,
+          padding: "5px 10px",
+        }}
         onClick={addInput}
+        disabled={loading}
       >
         + Añadir otra foto
       </button>
 
       <div style={{ marginTop: 30 }}>
-        <button onClick={onBack}>← Volver</button>
+        <button onClick={onBack} disabled={loading}>
+          ← Volver
+        </button>
+
         <button
           onClick={finalizarVisita}
-          style={{ marginLeft: 10, background: "#0f5132", color: "white", fontWeight: 'bold' }}
+          disabled={loading}
+          style={{
+            marginLeft: 10,
+            background: "#0f5132",
+            color: "white",
+            fontWeight: "bold",
+          }}
         >
-          Finalizar y Generar Informe
+          {loading ? "Subiendo..." : "Finalizar y Generar Informe"}
         </button>
       </div>
     </div>
